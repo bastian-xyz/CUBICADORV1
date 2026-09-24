@@ -1,0 +1,2803 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CUBICADOR LÁSER — C.I.D.</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+/* =========================================
+   theme.css - BASTIAN.XYZ C.I.D. MASTER THEME
+   (embebido tal cual para que el archivo sea autocontenido)
+   ========================================= */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap');
+
+:root {
+  --cid-negro: #111827;
+  --cid-panel: rgba(22, 31, 46, 0.70);
+  --cid-panel-soft: rgba(15, 76, 92, 0.20);
+  --cid-petroleo: #0F4C5C;
+  --cid-petroleo-br: #17738a;
+  --cid-plata: #9CA3AF;
+  --cid-blanco: #F8FAFC;
+  --cid-border: rgba(156, 163, 175, 0.25);
+
+  --bg: var(--cid-negro);
+  --bg-base: var(--cid-negro);
+  --bg2: var(--cid-panel-soft);
+  --surface: var(--cid-panel);
+  --surface2: var(--cid-panel-soft);
+  --panel: var(--cid-panel);
+  --panel-2: var(--cid-panel-soft);
+  --bg-panel: var(--cid-panel);
+  --bg-input: rgba(11, 17, 26, 0.6);
+
+  --border: var(--cid-border);
+  --border-soft: rgba(156, 163, 175, 0.1);
+  --line: var(--cid-border);
+  --panel-line: var(--cid-border);
+
+  --text: var(--cid-blanco);
+  --text-main: var(--cid-blanco);
+  --muted: var(--cid-plata);
+  --text-muted: var(--cid-plata);
+  --muted2: rgba(156, 163, 175, 0.5);
+  --text-dim: var(--cid-plata);
+
+  --brass: var(--cid-petroleo-br);
+  --brass-dim: var(--cid-petroleo);
+  --amber: var(--cid-petroleo-br);
+  --amber-dim: var(--cid-petroleo);
+  --cyan: var(--cid-plata);
+  --cyan-dim: rgba(156,163,175,.3);
+  --accent: var(--cid-petroleo-br);
+  --accent-dim: var(--cid-petroleo);
+  --amber-glow: rgba(15, 76, 92, 0.25);
+  --accent-glow: rgba(23, 115, 138, 0.25);
+  --grid-minor: rgba(15, 76, 92, 0.42);
+  --grid-major: rgba(15, 76, 92, 0.78);
+}
+
+body {
+  background-color: var(--cid-negro) !important;
+  background-image:
+    linear-gradient(rgba(15,76,92,.42) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15,76,92,.42) 1px, transparent 1px),
+    linear-gradient(rgba(15,76,92,.78) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15,76,92,.78) 1px, transparent 1px) !important;
+  background-size: 8px 8px, 8px 8px, 40px 40px, 40px 40px !important;
+  background-attachment: fixed !important;
+  font-family: 'Montserrat', sans-serif !important;
+  position: relative;
+}
+
+body::before, body::after { content: ""; position: fixed; pointer-events: none; }
+body::before { inset: 0; z-index: 0; background: radial-gradient(ellipse at 50% 46%, transparent 35%, rgba(0,0,0,.65) 100%); }
+body::after {
+  top: -20px; left: 0; right: 0; height: 2px; opacity: 0.7; z-index: 3;
+  background: linear-gradient(90deg, transparent, rgba(156,163,175,.45), transparent);
+  animation: cid-scan 8s linear infinite;
+}
+@keyframes cid-scan { 0% { transform: translateY(-12px); opacity: 0; } 15% { opacity: 0.8; } 100% { transform: translateY(100vh); opacity: 0.2; } }
+html, body { min-height: 100%; }
+body > * { position: relative; z-index: 1; }
+.main, .workspace, .layout { background: transparent !important; }
+
+.card, .panel, .control-section,
+.sidebar, .footer, .hud-corner, #textPanel, #layersPanel,
+.score-card, .analysis-card, .big-line, .preview {
+  background-color: var(--cid-panel) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  border-color: var(--cid-border) !important;
+}
+
+header { background-color: transparent !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+
+h1, h2, h3, button, .brand, .tab, .toggle { font-family: 'Montserrat', sans-serif !important; }
+
+/* =========================================
+   ESTILOS PROPIOS — CUBICADOR LÁSER
+   ========================================= */
+* { box-sizing: border-box; }
+body { margin: 0; color: var(--text); font-size: 14px; }
+
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 28px; border-bottom: 1px solid var(--border);
+}
+.brand { display: flex; flex-direction: column; gap: 2px; }
+.brand .title { font-size: 20px; font-weight: 800; letter-spacing: 1.5px; color: var(--text); }
+.brand .subtitle { font-size: 11px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+.badge {
+  font-size: 11px; color: var(--cid-petroleo-br); border: 1px solid var(--border);
+  padding: 4px 10px; border-radius: 20px; letter-spacing: .5px; background: var(--panel-2);
+}
+
+.wrap { max-width: 1400px; margin: 0 auto; padding: 20px 28px 60px; }
+
+.grid-main { display: grid; grid-template-columns: 350px 1fr; gap: 18px; align-items: start; }
+@media (min-width: 981px) { .sidebar-col { position: sticky; top: 18px; max-height: calc(100vh - 36px); overflow-y: auto; padding-right: 4px; } }
+@media (max-width: 980px) { .grid-main { grid-template-columns: 1fr; } .sidebar-col { position: static; max-height: none; } }
+
+.card {
+  border: 1px solid var(--border); border-radius: 10px; padding: 16px 16px 18px;
+  margin-bottom: 16px;
+}
+.card h2 {
+  font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--cid-petroleo-br);
+  margin: 0 0 14px; font-weight: 700; display: flex; align-items: center; gap: 8px;
+}
+.card h2::before { content: ""; width: 6px; height: 6px; background: var(--cid-petroleo-br); border-radius: 1px; display: inline-block; box-shadow: 0 0 6px var(--cid-petroleo-br); }
+
+.field { margin-bottom: 12px; }
+.field label { display: block; font-size: 10.5px; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); margin-bottom: 5px; }
+.row { display: flex; gap: 10px; }
+.row > .field { flex: 1; }
+
+input[type="text"], input[type="number"], textarea, select {
+  width: 100%; background: var(--bg-input); border: 1px solid var(--border); color: var(--text);
+  padding: 8px 10px; border-radius: 6px; font-size: 13.5px; font-family: inherit;
+}
+input[type="text"]:focus, input[type="number"]:focus, textarea:focus, select:focus {
+  outline: none; border-color: var(--cid-petroleo-br); box-shadow: 0 0 0 2px var(--accent-glow);
+}
+textarea { resize: vertical; min-height: 64px; font-family: 'Courier New', monospace; font-size: 12px; }
+
+input[type="range"] { width: 100%; accent-color: var(--cid-petroleo-br); }
+input[type="checkbox"] { accent-color: var(--cid-petroleo-br); width: 15px; height: 15px; vertical-align: middle; }
+
+.slider-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.slider-val { font-size: 13px; font-weight: 700; color: var(--cid-blanco); background: var(--panel-2); padding: 2px 8px; border-radius: 5px; border: 1px solid var(--border); min-width: 54px; text-align: center; }
+
+.presets { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+.chip {
+  flex: 1; min-width: 110px; text-align: center; padding: 9px 6px; border: 1px solid var(--border);
+  border-radius: 6px; cursor: pointer; font-size: 12.5px; font-weight: 600; color: var(--muted);
+  background: var(--bg-input); transition: all .15s;
+}
+.chip:hover { border-color: var(--cid-petroleo-br); color: var(--text); }
+.chip.active { background: var(--accent-glow); border-color: var(--cid-petroleo-br); color: var(--cid-blanco); }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  background: var(--accent-dim); border: 1px solid var(--cid-petroleo-br); color: var(--cid-blanco);
+  padding: 9px 16px; border-radius: 6px; cursor: pointer; font-size: 12.5px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .6px; transition: all .15s; font-family: inherit;
+}
+.btn:hover { background: var(--cid-petroleo-br); box-shadow: 0 0 14px var(--accent-glow); }
+.btn:active { transform: scale(.98); }
+.btn.block { width: 100%; }
+.btn.ghost { background: transparent; border-color: var(--border); color: var(--muted); }
+.btn.ghost:hover { border-color: var(--cid-plata); color: var(--text); box-shadow: none; }
+.btn.small { padding: 5px 10px; font-size: 11px; }
+.btn.danger { border-color: rgba(220,90,90,.5); color: #ff9c9c; background: rgba(120,40,40,.15); }
+.btn.danger:hover { background: rgba(150,50,50,.35); box-shadow: none; }
+.btn[disabled] { opacity: .4; cursor: not-allowed; pointer-events: none; }
+
+.file-btn { position: relative; overflow: hidden; display: inline-block; width: 100%; }
+.file-btn input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+
+.hr { height: 1px; background: var(--border-soft); margin: 14px 0; }
+
+.status-line { font-size: 11.5px; color: var(--muted); margin-top: 8px; min-height: 16px; }
+.status-line.ok { color: #7fd9a0; }
+.status-line.warn { color: #e8b25c; }
+.status-line.err { color: #ff8f8f; }
+
+table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+thead th {
+  text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: .7px; color: var(--muted);
+  border-bottom: 1px solid var(--border); padding: 6px 8px; font-weight: 600;
+}
+tbody td { padding: 7px 8px; border-bottom: 1px solid var(--border-soft); vertical-align: middle; }
+tbody tr:hover { background: var(--panel-2); }
+.tag { font-size: 9.5px; padding: 2px 7px; border-radius: 10px; border: 1px solid var(--border); text-transform: uppercase; letter-spacing: .4px; color: var(--muted); }
+.tag.dxf { color: var(--cid-petroleo-br); border-color: var(--cid-petroleo-br); }
+.qty-input { width: 60px; padding: 5px 6px; text-align: center; }
+.name-cell { font-weight: 600; color: var(--text); }
+.dim-cell { color: var(--muted); font-variant-numeric: tabular-nums; }
+.empty-msg { text-align: center; color: var(--muted); padding: 22px 10px; font-size: 12.5px; }
+
+.stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
+@media (max-width: 700px) { .stats-row { grid-template-columns: repeat(2, 1fr); } }
+.stat-box { border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; background: var(--panel-2); }
+.stat-box .val { font-size: 22px; font-weight: 800; color: var(--cid-blanco); }
+.stat-box .lbl { font-size: 10px; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); margin-top: 2px; }
+.stat-box.warn .val { color: #e8b25c; }
+
+.sheet-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+.sheet-tab {
+  display: inline-block; padding: 7px 13px; border-radius: 6px; border: 1px solid var(--border); cursor: pointer;
+  font-size: 12px; font-weight: 600; color: var(--muted); background: var(--bg-input);
+  text-decoration: none;
+}
+.sheet-tab:hover { color: var(--cid-blanco); border-color: var(--cid-petroleo-br); }
+.sheet-tab.active { border-color: var(--cid-petroleo-br); color: var(--cid-blanco); background: var(--accent-glow); }
+
+.sheet-view { border: 1px solid var(--border); border-radius: 8px; background: var(--bg-input); padding: 12px; }
+.view-toolbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.zoom-ctrl { display: flex; align-items: center; gap: 6px; }
+.zoom-ctrl .slider-val { min-width: 46px; }
+.sheet-svg-wrap { width: 100%; max-height: 72vh; overflow: auto; display: flex; justify-content: center; align-items: flex-start; }
+.sheet-svg-wrap svg { max-width: 100%; height: auto; display: block; }
+.sheet-card-head { font-size: 13px; color: var(--muted); margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+.sheet-card-head b { color: var(--cid-blanco); }
+.sheet-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; flex-wrap: wrap; gap: 10px; }
+.sheet-meta { font-size: 12px; color: var(--muted); }
+.sheet-meta b { color: var(--text); }
+
+.note {
+  font-size: 11.5px; color: var(--muted); line-height: 1.5; border-left: 2px solid var(--cid-petroleo-br);
+  padding: 8px 12px; background: var(--panel-2); border-radius: 0 6px 6px 0; margin-top: 4px;
+}
+
+.footer-note { text-align: center; font-size: 11px; color: var(--muted2); margin-top: 30px; letter-spacing: .3px; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="title">CUBICADOR LÁSER</div>
+    <div class="subtitle">Nesting &amp; cubicación de piezas · corte láser</div>
+  </div>
+  <div class="badge">C.I.D. · BASTIAN.XYZ</div>
+</div>
+
+<div class="wrap">
+  <div class="grid-main">
+
+    <!-- ===================== COLUMNA IZQUIERDA: MENÚ (CONFIG + PIEZAS) ===================== -->
+    <div class="sidebar-col">
+      <div class="card">
+        <h2>Plancha</h2>
+        <div class="presets" id="presetRow">
+          <div class="chip" data-w="1000" data-h="3000">1000 × 3000</div>
+          <div class="chip" data-w="1500" data-h="3000">1500 × 3000</div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label>Ancho (mm)</label>
+            <input type="number" id="sheetW" min="10" step="1" value="1000">
+          </div>
+          <div class="field">
+            <label>Alto (mm)</label>
+            <input type="number" id="sheetH" min="10" step="1" value="3000">
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="slider-row"><label style="margin:0">Pitch entre piezas</label><span class="slider-val" id="pitchVal">5 mm</span></div>
+          <input type="range" id="pitchSlider" min="0" max="50" step="0.5" value="5">
+        </div>
+
+        <div class="field">
+          <div class="slider-row"><label style="margin:0">Margen de borde</label><span class="slider-val" id="marginVal">10 mm</span></div>
+          <input type="range" id="marginSlider" min="0" max="100" step="1" value="10">
+        </div>
+
+        <div class="field">
+          <div class="slider-row"><label style="margin:0">Tamaño de texto (etiquetas)</label><span class="slider-val" id="labelSizeVal">6 mm</span></div>
+          <input type="range" id="labelSizeSlider" min="2" max="30" step="0.5" value="6">
+        </div>
+
+        <div class="field" style="display:flex; align-items:center; gap:8px; margin-top:14px;">
+          <input type="checkbox" id="shapeNest" checked>
+          <label style="margin:0; text-transform:none; font-size:12.5px; color:var(--text);">Anidar por contorno real (encaja piezas en L, U, ganchos)</label>
+        </div>
+
+        <div class="field">
+          <div class="slider-row"><label style="margin:0">Precisión del anidado</label><span class="slider-val" id="nestCellVal">2 mm</span></div>
+          <input type="range" id="nestCellSlider" min="1" max="6" step="0.5" value="2">
+          <div class="hint">Más fino aprovecha mejor pero demora más. 2 mm anda bien para casi todo.</div>
+        </div>
+
+        <div class="field" style="display:flex; align-items:center; gap:8px;">
+          <input type="checkbox" id="defaultRotate" checked>
+          <label style="margin:0; text-transform:none; font-size:12.5px; color:var(--text);">Permitir rotar piezas 90° (piezas nuevas)</label>
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="field" style="display:flex; align-items:center; gap:8px;">
+          <input type="checkbox" id="markRemnant" checked>
+          <label style="margin:0; text-transform:none; font-size:12.5px; color:var(--text);">Marcar despunte (corte transversal + recortes)</label>
+        </div>
+
+        <div class="field">
+          <div class="slider-row"><label style="margin:0">Despunte mínimo útil</label><span class="slider-val" id="minRemnantVal">200 mm</span></div>
+          <input type="range" id="minRemnantSlider" min="50" max="800" step="10" value="200">
+          <div class="hint">Bajo esta medida (por lado) el sobrante se considera merma y no se marca.</div>
+        </div>
+
+        <div class="field" style="display:flex; align-items:center; gap:8px;">
+          <input type="checkbox" id="remnantInDxf" checked>
+          <label style="margin:0; text-transform:none; font-size:12.5px; color:var(--text);">Incluir despunte en el DXF (capa <b>DESPUNTE</b>)</label>
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="field">
+          <label>Nombre del trabajo / cliente</label>
+          <input type="text" id="jobName" placeholder="Aparece en el encabezado del PDF">
+        </div>
+
+        <div class="field">
+          <label>Formato del PDF</label>
+          <select id="pdfFormat">
+            <option value="a4" selected>A4 apaisado (presentación)</option>
+            <option value="a3">A3 apaisado (presentación)</option>
+            <option value="carta">Carta apaisado (presentación)</option>
+            <option value="real">Escala real 1:1 (plotear)</option>
+          </select>
+          <div class="hint">El modo presentación arma una lámina con viñeta, dibujo a escala y lista de corte.</div>
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="field">
+          <label>Semilla de anidado</label>
+          <div class="row">
+            <input type="number" id="seedInput" step="1" min="0" style="flex:1;">
+            <button class="btn ghost small" id="btnRandomSeed" type="button" style="flex:0 0 auto;">🎲</button>
+          </div>
+        </div>
+        <div class="note" style="margin-top:6px;">La semilla cambia el orden en que se acomodan las piezas. Misma semilla = mismo resultado siempre; probar semillas distintas puede reducir la cantidad de planchas necesarias.</div>
+      </div>
+
+      <div class="card">
+        <h2>Agregar pieza</h2>
+        <div class="field">
+          <label>Nombre</label>
+          <input type="text" id="pName" placeholder="ej. Soporte A">
+        </div>
+        <div class="row">
+          <div class="field">
+            <label>Ancho (mm)</label>
+            <input type="number" id="pW" min="0.1" step="0.1">
+          </div>
+          <div class="field">
+            <label>Alto (mm)</label>
+            <input type="number" id="pH" min="0.1" step="0.1">
+          </div>
+          <div class="field" style="max-width:80px;">
+            <label>Cant.</label>
+            <input type="number" id="pQty" min="1" step="1" value="1">
+          </div>
+        </div>
+        <button class="btn block" id="btnAddManual">+ Agregar pieza</button>
+
+        <div class="hr"></div>
+
+        <div class="field">
+          <label>Lote por texto — una pieza por línea: <code>Nombre,Ancho,Alto,Cantidad</code></label>
+          <textarea id="batchText" placeholder="Soporte A,120,80,10&#10;Soporte B,200,150,4"></textarea>
+        </div>
+        <button class="btn ghost block" id="btnAddBatch">+ Agregar lote de texto</button>
+
+        <div class="hr"></div>
+
+        <div class="field">
+          <label>Unidad en que viene dibujado el DXF</label>
+          <select id="dxfUnit">
+            <option value="mm" selected>Milímetros (mm) — lo normal</option>
+            <option value="cm">Centímetros (cm)</option>
+            <option value="in">Pulgadas (in)</option>
+            <option value="m">Metros (m)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Subir pieza(s) DXF (una o varias)</label>
+          <div class="file-btn">
+            <button class="btn ghost block" type="button">⤒ Subir archivo(s) DXF</button>
+            <input type="file" id="dxfInput" accept=".dxf" multiple>
+          </div>
+        </div>
+        <div class="status-line" id="uploadStatus"></div>
+      </div>
+    </div>
+
+    <!-- ===================== COLUMNA DERECHA: PIEZAS + PLANCHA / RESULTADOS ===================== -->
+    <div>
+      <div class="card">
+        <h2>Piezas agregadas</h2>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Origen</th>
+                <th>Dimensiones</th>
+                <th>Cantidad</th>
+                <th>Rotar 90°</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="pieceTableBody">
+              <tr><td colspan="6" class="empty-msg">Aún no has agregado piezas.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="hr"></div>
+        <div class="row" style="align-items:flex-end;">
+          <button class="btn" id="btnCalc" style="flex:1;">▶ Calcular cubicación / anidado</button>
+          <div class="field" style="flex:0 0 130px; margin-bottom:0;">
+            <label>Semillas a probar</label>
+            <input type="number" id="seedTrials" min="1" max="500" step="1" value="60">
+          </div>
+          <button class="btn ghost" id="btnBestSeed" type="button" style="flex:0 0 auto; white-space:nowrap;">🔀 Probar variaciones</button>
+        </div>
+        <div class="status-line" id="seedStatus"></div>
+      </div>
+
+      <div id="resultsArea"></div>
+
+      <div class="note" id="methodNote">
+        El anidado usa empaquetado tipo <b>estantería (shelf)</b> sobre el rectángulo contenedor de cada pieza — rápido y sin traslapes, pero no es un nesting óptimo de piezas irregulares. La <b>semilla</b> cambia el orden de acomodo de las piezas (mismo número = mismo resultado); usa "Probar variaciones" para barrer muchas semillas automáticamente y quedarte con la que use menos planchas. Las piezas subidas en DXF exportan su geometría real: polilíneas, líneas, círculos, <b>arcos</b> (incluyendo los que vienen como "bulge"/curvatura dentro de una polilínea — ya no se cortan en línea recta) y <b>SPLINE</b> (se aproximan con muestreo denso de puntos para que el perfil se mantenga curvo). Las piezas manuales exportan como rectángulo. El DXF se genera en formato <b>R12 (AC1009)</b>, el más compatible con AutoCAD y con controladores de máquinas láser/CNC. El PDF es una vista de referencia de la plancha con los nombres de pieza — el tamaño de ese texto se ajusta con el slider "Tamaño de texto" y requiere conexión a internet la primera vez que se usa (carga la librería de PDF).
+      </div>
+      <div class="footer-note">Cubicador Láser · herramienta local, sin conexión a servidor · C.I.D.</div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  // ---------------------------------------------------------------
+  // ESTADO
+  // ---------------------------------------------------------------
+  var state = {
+    sheetW: 1000,
+    sheetH: 3000,
+    pitch: 5,
+    margin: 10,
+    labelSizeMm: 6,
+    seed: Math.floor(Math.random() * 100000),
+    viewRotated: true,
+    zoom: 1,
+    defaultRotate: true,
+    markRemnant: true,     // marcar despunte en vista, PDF y DXF
+    minRemnant: 200,       // mm mínimos por lado para considerarlo útil
+    remnantInDxf: true,    // incluir la capa DESPUNTE en el DXF exportado
+    shapeNest: true,       // probar también anidado por contorno real
+    nestCell: 2,           // resolución del anidado por contorno, en mm
+    pdfFormat: 'a4',       // a4 | a3 | carta | real (1:1)
+    jobName: '',           // nombre de trabajo/cliente para el encabezado del PDF
+    dxfUnit: 'mm',         // unidad del DXF de origen: mm | cm | in | m
+    pieces: [],       // {id, name, source, w, h, qty, allowRotate, entities}
+    result: null,      // {sheets:[[placement...]], unplaced:[]}
+    activeSheet: 0
+  };
+  var pieceCounter = 0;
+
+  // ---------------------------------------------------------------
+  // GEOMETRÍA DE CURVAS: bulge (arcos en polilíneas) y SPLINE
+  // ---------------------------------------------------------------
+  function bulgeToArc(p1, p2, bulge) {
+    var theta = 4 * Math.atan(bulge); // ángulo incluido, con signo (rad)
+    var dx = p2[0] - p1[0], dy = p2[1] - p1[1];
+    var chord = Math.sqrt(dx * dx + dy * dy);
+    if (chord < 1e-9) return null;
+    var absTheta = Math.abs(theta);
+    var r = chord / (2 * Math.sin(absTheta / 2));
+    var ux = dx / chord, uy = dy / chord;
+    var nlx = -uy, nly = ux; // perpendicular "izquierda" de la cuerda
+    var mx = (p1[0] + p2[0]) / 2, my = (p1[1] + p2[1]) / 2;
+    var sgn = bulge >= 0 ? 1 : -1;
+    var h = sgn * r * Math.cos(absTheta / 2);
+    var cx = mx + h * nlx, cy = my + h * nly;
+    var a1 = Math.atan2(p1[1] - cy, p1[0] - cx);
+    var a2 = a1 + theta;
+    var a1d = a1 * 180 / Math.PI, a2d = a2 * 180 / Math.PI;
+    if (theta < 0) { var tmp = a1d; a1d = a2d; a2d = tmp; }
+    return { cx: cx, cy: cy, r: r, a1: a1d, a2: a2d };
+  }
+
+  // Convierte una polilínea con "bulge" (arcos en las esquinas/segmentos) en
+  // una lista de entidades LINE + ARC reales. Si no hay bulges, mantiene una
+  // única entidad POLYLINE (comportamiento anterior, sin cambios).
+  function decomposePolylineWithBulge(pts, closed) {
+    var n = pts.length;
+    var anyBulge = pts.some(function (p) { return p[2] && Math.abs(p[2]) > 1e-9; });
+    if (!anyBulge) {
+      return [{ type: 'POLYLINE', closed: closed, points: pts.map(function (p) { return [p[0], p[1]]; }) }];
+    }
+    var segCount = closed ? n : n - 1;
+    var out = [];
+    for (var i = 0; i < segCount; i++) {
+      var a = pts[i], b = pts[(i + 1) % n];
+      var bulge = a[2] || 0;
+      if (Math.abs(bulge) < 1e-9) {
+        out.push({ type: 'LINE', x1: a[0], y1: a[1], x2: b[0], y2: b[1] });
+      } else {
+        var arc = bulgeToArc([a[0], a[1]], [b[0], b[1]], bulge);
+        if (arc) out.push({ type: 'ARC', cx: arc.cx, cy: arc.cy, r: arc.r, a1: arc.a1, a2: arc.a2 });
+        else out.push({ type: 'LINE', x1: a[0], y1: a[1], x2: b[0], y2: b[1] });
+      }
+    }
+    return out;
+  }
+
+  function bsplineBasis(i, k, t, knots) {
+    if (k === 0) {
+      return (knots[i] <= t && t < knots[i + 1]) ? 1 : 0;
+    }
+    var denom1 = knots[i + k] - knots[i];
+    var term1 = 0;
+    if (denom1 > 1e-9) term1 = (t - knots[i]) / denom1 * bsplineBasis(i, k - 1, t, knots);
+    var denom2 = knots[i + k + 1] - knots[i + 1];
+    var term2 = 0;
+    if (denom2 > 1e-9) term2 = (knots[i + k + 1] - t) / denom2 * bsplineBasis(i + 1, k - 1, t, knots);
+    return term1 + term2;
+  }
+
+  function evalBSplineCurve(ctrlPts, weights, degree, knots, numSamples) {
+    numSamples = numSamples || 48;
+    var n = ctrlPts.length - 1;
+    var tMin = knots[degree], tMax = knots[knots.length - degree - 1];
+    var pts = [];
+    for (var s = 0; s < numSamples; s++) {
+      var t = tMin + (tMax - tMin) * s / numSamples;
+      var nx = 0, ny = 0, den = 0;
+      for (var i = 0; i <= n; i++) {
+        var b = bsplineBasis(i, degree, t, knots);
+        if (b === 0) continue;
+        var w = weights ? weights[i] : 1;
+        nx += b * w * ctrlPts[i][0];
+        ny += b * w * ctrlPts[i][1];
+        den += b * w;
+      }
+      if (den > 1e-9) pts.push([nx / den, ny / den]);
+    }
+    pts.push(ctrlPts[n].slice());
+    return pts;
+  }
+
+  function catmullRomThroughPoints(pts, closed, samplesPerSeg) {
+    samplesPerSeg = samplesPerSeg || 12;
+    var n = pts.length;
+    var get = function (i) {
+      if (closed) return pts[((i % n) + n) % n];
+      return pts[Math.max(0, Math.min(n - 1, i))];
+    };
+    var out = [];
+    var segCount = closed ? n : n - 1;
+    for (var i = 0; i < segCount; i++) {
+      var p0 = get(i - 1), p1 = get(i), p2 = get(i + 1), p3 = get(i + 2);
+      for (var s = 0; s < samplesPerSeg; s++) {
+        var t = s / samplesPerSeg;
+        var t2 = t * t, t3 = t2 * t;
+        var x = 0.5 * ((2 * p1[0]) + (-p0[0] + p2[0]) * t + (2 * p0[0] - 5 * p1[0] + 4 * p2[0] - p3[0]) * t2 + (-p0[0] + 3 * p1[0] - 3 * p2[0] + p3[0]) * t3);
+        var y = 0.5 * ((2 * p1[1]) + (-p0[1] + p2[1]) * t + (2 * p0[1] - 5 * p1[1] + 4 * p2[1] - p3[1]) * t2 + (-p0[1] + 3 * p1[1] - 3 * p2[1] + p3[1]) * t3);
+        out.push([x, y]);
+      }
+    }
+    out.push(closed ? get(0) : pts[n - 1]);
+    return out;
+  }
+
+  // ---------------------------------------------------------------
+  // DXF PARSER
+  // ---------------------------------------------------------------
+  function tokenizeDXF(text) {
+    var lines = text.split(/\r\n|\r|\n/);
+    var pairs = [];
+    for (var i = 0; i + 1 < lines.length; i += 2) {
+      var code = parseInt(lines[i].trim(), 10);
+      var value = lines[i + 1] !== undefined ? lines[i + 1].trim() : '';
+      if (!isNaN(code)) pairs.push([code, value]);
+    }
+    return pairs;
+  }
+
+  function parseDXF(text) {
+    var pairs = tokenizeDXF(text);
+    var entities = [];
+    var i = 0;
+    var inEntities = false;
+    while (i < pairs.length) {
+      var code = pairs[i][0], value = pairs[i][1];
+      if (code === 2 && value === 'ENTITIES') { inEntities = true; i++; continue; }
+      if (code === 0 && value === 'ENDSEC') { inEntities = false; i++; continue; }
+      if (inEntities && code === 0) {
+        var type = value;
+        i++;
+        if (type === 'LINE') {
+          var x1, y1, x2, y2;
+          while (i < pairs.length && pairs[i][0] !== 0) {
+            var c = pairs[i][0], v = pairs[i][1];
+            if (c === 10) x1 = parseFloat(v);
+            else if (c === 20) y1 = parseFloat(v);
+            else if (c === 11) x2 = parseFloat(v);
+            else if (c === 21) y2 = parseFloat(v);
+            i++;
+          }
+          if ([x1, y1, x2, y2].every(function (n) { return typeof n === 'number' && !isNaN(n); }))
+            entities.push({ type: 'LINE', x1: x1, y1: y1, x2: x2, y2: y2 });
+        } else if (type === 'CIRCLE') {
+          var cx, cy, r;
+          while (i < pairs.length && pairs[i][0] !== 0) {
+            var c2 = pairs[i][0], v2 = pairs[i][1];
+            if (c2 === 10) cx = parseFloat(v2);
+            else if (c2 === 20) cy = parseFloat(v2);
+            else if (c2 === 40) r = parseFloat(v2);
+            i++;
+          }
+          if ([cx, cy, r].every(function (n) { return typeof n === 'number' && !isNaN(n); }))
+            entities.push({ type: 'CIRCLE', cx: cx, cy: cy, r: r });
+        } else if (type === 'ARC') {
+          var acx, acy, ar, a1, a2;
+          while (i < pairs.length && pairs[i][0] !== 0) {
+            var c3 = pairs[i][0], v3 = pairs[i][1];
+            if (c3 === 10) acx = parseFloat(v3);
+            else if (c3 === 20) acy = parseFloat(v3);
+            else if (c3 === 40) ar = parseFloat(v3);
+            else if (c3 === 50) a1 = parseFloat(v3);
+            else if (c3 === 51) a2 = parseFloat(v3);
+            i++;
+          }
+          if ([acx, acy, ar, a1, a2].every(function (n) { return typeof n === 'number' && !isNaN(n); }))
+            entities.push({ type: 'ARC', cx: acx, cy: acy, r: ar, a1: a1, a2: a2 });
+        } else if (type === 'LWPOLYLINE') {
+          var closed = false, pts = [], cur = null;
+          while (i < pairs.length && pairs[i][0] !== 0) {
+            var c4 = pairs[i][0], v4 = pairs[i][1];
+            if (c4 === 70) closed = (parseInt(v4, 10) & 1) === 1;
+            else if (c4 === 10) { if (cur && cur.y !== undefined) pts.push([cur.x, cur.y, cur.bulge || 0]); cur = { x: parseFloat(v4), y: undefined, bulge: 0 }; }
+            else if (c4 === 20) { if (cur) cur.y = parseFloat(v4); }
+            else if (c4 === 42) { if (cur) cur.bulge = parseFloat(v4); }
+            i++;
+          }
+          if (cur && cur.y !== undefined) pts.push([cur.x, cur.y, cur.bulge || 0]);
+          if (pts.length >= 2) {
+            decomposePolylineWithBulge(pts, closed).forEach(function (e) { entities.push(e); });
+          }
+        } else if (type === 'POLYLINE') {
+          var closedFlag = false;
+          while (i < pairs.length && pairs[i][0] !== 0) {
+            var c5 = pairs[i][0], v5 = pairs[i][1];
+            if (c5 === 70) closedFlag = (parseInt(v5, 10) & 1) === 1;
+            i++;
+          }
+          var vpts = [];
+          while (i < pairs.length && !(pairs[i][0] === 0 && pairs[i][1] === 'SEQEND')) {
+            if (pairs[i][0] === 0 && pairs[i][1] === 'VERTEX') {
+              i++;
+              var vx, vy, vbulge = 0;
+              while (i < pairs.length && pairs[i][0] !== 0) {
+                var c6 = pairs[i][0], v6 = pairs[i][1];
+                if (c6 === 10) vx = parseFloat(v6);
+                else if (c6 === 20) vy = parseFloat(v6);
+                else if (c6 === 42) vbulge = parseFloat(v6);
+                i++;
+              }
+              if (typeof vx === 'number' && typeof vy === 'number') vpts.push([vx, vy, vbulge]);
+            } else { i++; }
+          }
+          if (i < pairs.length && pairs[i][0] === 0 && pairs[i][1] === 'SEQEND') i++;
+          if (vpts.length >= 2) {
+            decomposePolylineWithBulge(vpts, closedFlag).forEach(function (e) { entities.push(e); });
+          }
+        } else if (type === 'SPLINE') {
+          var sFlags = 0, sDegree = 3, sKnots = [], sCtrl = [], sFit = [], sWeights = [], sCtrlCur = null, sFitCur = null;
+          while (i < pairs.length && pairs[i][0] !== 0) {
+            var c7 = pairs[i][0], v7 = pairs[i][1];
+            if (c7 === 70) sFlags = parseInt(v7, 10) || 0;
+            else if (c7 === 71) sDegree = parseInt(v7, 10) || 3;
+            else if (c7 === 40) sKnots.push(parseFloat(v7));
+            else if (c7 === 41) sWeights.push(parseFloat(v7));
+            else if (c7 === 10) { if (sCtrlCur && sCtrlCur.y !== undefined) sCtrl.push([sCtrlCur.x, sCtrlCur.y]); sCtrlCur = { x: parseFloat(v7), y: undefined }; }
+            else if (c7 === 20) { if (sCtrlCur) sCtrlCur.y = parseFloat(v7); }
+            else if (c7 === 11) { if (sFitCur && sFitCur.y !== undefined) sFit.push([sFitCur.x, sFitCur.y]); sFitCur = { x: parseFloat(v7), y: undefined }; }
+            else if (c7 === 21) { if (sFitCur) sFitCur.y = parseFloat(v7); }
+            i++;
+          }
+          if (sCtrlCur && sCtrlCur.y !== undefined) sCtrl.push([sCtrlCur.x, sCtrlCur.y]);
+          if (sFitCur && sFitCur.y !== undefined) sFit.push([sFitCur.x, sFitCur.y]);
+          var sClosed = (sFlags & 1) === 1;
+          var samplePts = null;
+          if (sCtrl.length >= 2 && sDegree >= 1 && sKnots.length === sCtrl.length + sDegree + 1) {
+            try { samplePts = evalBSplineCurve(sCtrl, sWeights.length === sCtrl.length ? sWeights : null, sDegree, sKnots, 48); } catch (errBs) { samplePts = null; }
+          }
+          if (!samplePts && sFit.length >= 2) {
+            samplePts = catmullRomThroughPoints(sFit, sClosed, 12);
+          }
+          if (!samplePts && sCtrl.length >= 2) {
+            samplePts = sCtrl.slice();
+          }
+          if (samplePts && samplePts.length >= 2) {
+            entities.push({ type: 'POLYLINE', points: samplePts, closed: sClosed });
+          }
+        } else {
+          while (i < pairs.length && pairs[i][0] !== 0) i++;
+        }
+        continue;
+      }
+      i++;
+    }
+    return entities;
+  }
+
+  function bboxOfEntities(entities) {
+    var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    function upd(x, y) { if (x < minX) minX = x; if (y < minY) minY = y; if (x > maxX) maxX = x; if (y > maxY) maxY = y; }
+    entities.forEach(function (e) {
+      if (e.type === 'LINE') { upd(e.x1, e.y1); upd(e.x2, e.y2); }
+      else if (e.type === 'POLYLINE') { e.points.forEach(function (p) { upd(p[0], p[1]); }); }
+      else if (e.type === 'CIRCLE') { upd(e.cx - e.r, e.cy - e.r); upd(e.cx + e.r, e.cy + e.r); }
+      else if (e.type === 'ARC') { upd(e.cx - e.r, e.cy - e.r); upd(e.cx + e.r, e.cy + e.r); }
+    });
+    if (!isFinite(minX)) return { minX: 0, minY: 0, maxX: 0, maxY: 0, w: 0, h: 0 };
+    return { minX: minX, minY: minY, maxX: maxX, maxY: maxY, w: maxX - minX, h: maxY - minY };
+  }
+
+  // Factor de escala para llevar las coordenadas del DXF a milímetros,
+  // según en qué unidad haya sido dibujado el archivo de origen (muchos
+  // softwares no escriben $INSUNITS correcto, así que se deja a elección
+  // manual en vez de confiar ciegamente en la cabecera).
+  var DXF_UNIT_SCALE = { mm: 1, cm: 10, m: 1000, in: 25.4 };
+  function scaleEntities(entities, k) {
+    if (k === 1) return entities;
+    return entities.map(function (e) {
+      if (e.type === 'LINE') return { type: 'LINE', x1: e.x1 * k, y1: e.y1 * k, x2: e.x2 * k, y2: e.y2 * k };
+      if (e.type === 'POLYLINE') return { type: 'POLYLINE', closed: e.closed, points: e.points.map(function (p) { return [p[0] * k, p[1] * k]; }) };
+      if (e.type === 'CIRCLE') return { type: 'CIRCLE', cx: e.cx * k, cy: e.cy * k, r: e.r * k };
+      if (e.type === 'ARC') return { type: 'ARC', cx: e.cx * k, cy: e.cy * k, r: e.r * k, a1: e.a1, a2: e.a2 };
+      return e;
+    });
+  }
+
+  function normalizeEntities(entities) {
+    var bbox = bboxOfEntities(entities);
+    var dx = -bbox.minX, dy = -bbox.minY;
+    var norm = entities.map(function (e) {
+      if (e.type === 'LINE') return { type: 'LINE', x1: e.x1 + dx, y1: e.y1 + dy, x2: e.x2 + dx, y2: e.y2 + dy };
+      if (e.type === 'POLYLINE') return { type: 'POLYLINE', closed: e.closed, points: e.points.map(function (p) { return [p[0] + dx, p[1] + dy]; }) };
+      if (e.type === 'CIRCLE') return { type: 'CIRCLE', cx: e.cx + dx, cy: e.cy + dy, r: e.r };
+      if (e.type === 'ARC') return { type: 'ARC', cx: e.cx + dx, cy: e.cy + dy, r: e.r, a1: e.a1, a2: e.a2 };
+      return e;
+    });
+    return { entities: norm, w: bbox.w, h: bbox.h };
+  }
+
+  // ---------------------------------------------------------------
+  // TRANSFORM (rotación 90° + traslado a posición de anidado)
+  // ---------------------------------------------------------------
+  // Giros en cuartos de vuelta: 0 = sin girar, 1 = 90°, 2 = 180°, 3 = 270°.
+  // El anidado por contorno necesita los cuatro (dos piezas en L encajan
+  // una en el hueco de la otra recién al girar una 180°). Se acepta
+  // también el booleano antiguo, donde true equivale a 90°.
+  function quarterOf(rot) {
+    if (rot === true) return 1;
+    if (!rot) return 0;
+    return ((rot % 4) + 4) % 4;
+  }
+  function transformPoint(x, y, w, h, rot) {
+    var q = quarterOf(rot);
+    if (q === 0) return [x, y];
+    if (q === 1) return [h - y, x];
+    if (q === 2) return [w - x, h - y];
+    return [y, w - x];
+  }
+  // Giro efectivo de una colocación: el packer por contorno entrega
+  // `rot` en cuartos; el de rectángulo envolvente solo `rotated`.
+  function placementRot(pl) { return pl.rot !== undefined ? pl.rot : (pl.rotated ? 1 : 0); }
+
+  function transformEntitiesForPlacement(entities, w, h, rotated, px, py) {
+    return entities.map(function (e) {
+      if (e.type === 'LINE') {
+        var p1 = transformPoint(e.x1, e.y1, w, h, rotated);
+        var p2 = transformPoint(e.x2, e.y2, w, h, rotated);
+        return { type: 'LINE', x1: p1[0] + px, y1: p1[1] + py, x2: p2[0] + px, y2: p2[1] + py };
+      }
+      if (e.type === 'POLYLINE') {
+        return {
+          type: 'POLYLINE', closed: e.closed, points: e.points.map(function (p) {
+            var t = transformPoint(p[0], p[1], w, h, rotated);
+            return [t[0] + px, t[1] + py];
+          })
+        };
+      }
+      if (e.type === 'CIRCLE') {
+        var c = transformPoint(e.cx, e.cy, w, h, rotated);
+        return { type: 'CIRCLE', cx: c[0] + px, cy: c[1] + py, r: e.r };
+      }
+      if (e.type === 'ARC') {
+        var ac = transformPoint(e.cx, e.cy, w, h, rotated);
+        var qq = quarterOf(rotated);
+        var a1 = (e.a1 + 90 * qq) % 360, a2 = (e.a2 + 90 * qq) % 360;
+        return { type: 'ARC', cx: ac[0] + px, cy: ac[1] + py, r: e.r, a1: a1, a2: a2 };
+      }
+      return e;
+    });
+  }
+
+  function arcToPolylinePoints(cx, cy, r, a1, a2, segments) {
+    segments = segments || 20;
+    var start = a1, sweep = a2 - a1;
+    while (sweep <= 0) sweep += 360;
+    var pts = [];
+    for (var i = 0; i <= segments; i++) {
+      var ang = (start + sweep * i / segments) * Math.PI / 180;
+      pts.push([cx + r * Math.cos(ang), cy + r * Math.sin(ang)]);
+    }
+    return pts;
+  }
+
+  function rectEntities(w, h) {
+    return [{ type: 'POLYLINE', closed: true, points: [[0, 0], [w, 0], [w, h], [0, h]] }];
+  }
+
+  // ---------------------------------------------------------------
+  // EMPAQUETADO (shelf packing con rotación opcional + semilla)
+  // ---------------------------------------------------------------
+  // PRNG determinístico (mulberry32): misma semilla = mismo resultado.
+  function mulberry32(seed) {
+    return function () {
+      seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+      var t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  var SORT_STRATEGIES = [
+    function (p) { return Math.max(p.w, p.h); },
+    function (p) { return p.w * p.h; },
+    function (p) { return Math.min(p.w, p.h); },
+    function (p) { return p.w + p.h; }
+  ];
+
+  // ---------------------------------------------------------------
+  // ANIDADO (nesting) — MaxRects con rotación 90° real, probando varias
+  // heurísticas de colocación por varios órdenes de pieza y quedándose con
+  // el mejor resultado. El criterio no es solo "que quepa": se prioriza
+  // (1) menos piezas sin ubicar, (2) menos planchas y (3) EL DESPUNTE
+  // RECUPERABLE MÁS GRANDE POSIBLE, para que lo que sobre quede como un
+  // paño útil y no como recortes desperdigados.
+  //
+  // La heurística 'bl' (bottom-left) es la que compacta las piezas hacia
+  // un extremo y por lo tanto deja un frente de corte limpio con un paño
+  // transversal aprovechable; las otras tres priorizan densidad. Se corren
+  // todas y gana la que mejor puntúa.
+  //
+  // El pitch se reserva como margen en las CUATRO direcciones alrededor de
+  // cada pieza al recortar el espacio libre, garantizando la separación
+  // mínima sin importar el orden de colocación.
+  // ---------------------------------------------------------------
+  var PACK_EPS = 1e-6;
+
+  var FIT_HEURISTICS = [
+    { name: 'baf', score: function (f, w, h) { return [f.w * f.h - w * h, Math.min(f.w - w, f.h - h)]; } },
+    { name: 'bssf', score: function (f, w, h) { return [Math.min(f.w - w, f.h - h), Math.max(f.w - w, f.h - h)]; } },
+    { name: 'blsf', score: function (f, w, h) { return [Math.max(f.w - w, f.h - h), Math.min(f.w - w, f.h - h)]; } },
+    { name: 'bl', score: function (f, w, h) { return [f.y + h, f.x]; } }
+  ];
+
+  function cmpVec(a, b) {
+    var n = Math.max(a.length, b.length);
+    for (var i = 0; i < n; i++) {
+      var av = a[i] === undefined ? 0 : a[i], bv = b[i] === undefined ? 0 : b[i];
+      if (av < bv - PACK_EPS) return -1;
+      if (av > bv + PACK_EPS) return 1;
+    }
+    return 0;
+  }
+
+  function splitFreeRect(freeRects, used) {
+    var out = [];
+    for (var i = 0; i < freeRects.length; i++) {
+      var f = freeRects[i];
+      if (used.x >= f.x + f.w - PACK_EPS || used.x + used.w <= f.x + PACK_EPS ||
+          used.y >= f.y + f.h - PACK_EPS || used.y + used.h <= f.y + PACK_EPS) { out.push(f); continue; }
+      if (used.x > f.x + PACK_EPS) out.push({ x: f.x, y: f.y, w: used.x - f.x, h: f.h });
+      if (used.x + used.w < f.x + f.w - PACK_EPS) out.push({ x: used.x + used.w, y: f.y, w: (f.x + f.w) - (used.x + used.w), h: f.h });
+      if (used.y > f.y + PACK_EPS) out.push({ x: f.x, y: f.y, w: f.w, h: used.y - f.y });
+      if (used.y + used.h < f.y + f.h - PACK_EPS) out.push({ x: f.x, y: used.y + used.h, w: f.w, h: (f.y + f.h) - (used.y + used.h) });
+    }
+    out = out.filter(function (r) { return r.w > PACK_EPS && r.h > PACK_EPS; });
+    var pruned = [];
+    for (var a = 0; a < out.length; a++) {
+      var contained = false;
+      for (var b = 0; b < out.length; b++) {
+        if (a === b) continue;
+        var A = out[a], B = out[b];
+        if (A.x >= B.x - PACK_EPS && A.y >= B.y - PACK_EPS && A.x + A.w <= B.x + B.w + PACK_EPS && A.y + A.h <= B.y + B.h + PACK_EPS) {
+          if (A.x === B.x && A.y === B.y && A.w === B.w && A.h === B.h) { if (a > b) { contained = true; break; } }
+          else { contained = true; break; }
+        }
+      }
+      if (!contained) pruned.push(out[a]);
+    }
+    return pruned;
+  }
+
+  function packOneSheet(list, usableW, usableH, pitch, margin, heur) {
+    var freeRects = [{ x: 0, y: 0, w: usableW, h: usableH }];
+    var placements = [], leftover = [];
+    for (var idx = 0; idx < list.length; idx++) {
+      var item = list[idx];
+      var candidates = item.allowRotate ? [[item.w, item.h, false], [item.h, item.w, true]] : [[item.w, item.h, false]];
+      var best = null;
+      for (var ci = 0; ci < candidates.length; ci++) {
+        var reqW = candidates[ci][0], reqH = candidates[ci][1], rot = candidates[ci][2];
+        for (var ri = 0; ri < freeRects.length; ri++) {
+          var f = freeRects[ri];
+          if (f.w + PACK_EPS >= reqW && f.h + PACK_EPS >= reqH) {
+            var sc = heur.score(f, reqW, reqH);
+            if (!best || cmpVec(sc, best.score) < 0) best = { rectIdx: ri, w: reqW, h: reqH, rotated: rot, score: sc };
+          }
+        }
+      }
+      if (!best) { leftover.push(item); continue; }
+      var chosen = freeRects[best.rectIdx];
+      placements.push({ id: item.id, refPieceId: item.refPieceId, x: chosen.x + margin, y: chosen.y + margin, w: best.w, h: best.h, rotated: best.rotated });
+      freeRects = splitFreeRect(freeRects, { x: chosen.x - pitch, y: chosen.y - pitch, w: best.w + 2 * pitch, h: best.h + 2 * pitch });
+    }
+    return { placements: placements, leftover: leftover, freeRects: freeRects };
+  }
+
+  function packRun(items, sheetW, sheetH, pitch, margin, heur) {
+    var usableW = sheetW - 2 * margin, usableH = sheetH - 2 * margin;
+    var sheets = [], freeBySheet = [], remaining = items.slice(), guard = 0;
+    while (remaining.length && guard < 2000) {
+      guard++;
+      var r = packOneSheet(remaining, usableW, usableH, pitch, margin, heur);
+      if (r.placements.length === 0) break;
+      sheets.push(r.placements);
+      freeBySheet.push(r.freeRects);
+      remaining = r.leftover;
+    }
+    return { sheets: sheets, freeBySheet: freeBySheet, unplaced: remaining };
+  }
+
+  // ---------------------------------------------------------------
+  // DESPUNTE — qué se puede recuperar de la plancha.
+  //   · paño transversal: todo lo que queda más allá del frente de corte,
+  //     a lo ancho completo de la plancha (es el despunte que se guarda
+  //     entero y se vuelve a usar en otro trabajo).
+  //   · recortes: rectángulos libres útiles que queden BAJO ese frente,
+  //     cuando la última fila quedó a medio llenar y sobra una L.
+  // Los rectángulos libres que entrega el packer son maximales y se
+  // solapan entre sí, así que se elige un subconjunto disjunto (el más
+  // grande primero).
+  // ---------------------------------------------------------------
+  function computeRemnant(sheetPlacements, freeRects, sheetW, sheetH, pitch, margin, minRemnant) {
+    var usedMaxY = 0;
+    sheetPlacements.forEach(function (p) { usedMaxY = Math.max(usedMaxY, p.y + p.h); });
+    var cutY = Math.min(sheetH, usedMaxY + pitch);
+    var pano = null;
+    if (sheetH - cutY >= minRemnant) pano = { x: 0, y: cutY, w: sheetW, h: sheetH - cutY };
+
+    var limitY = pano ? cutY : sheetH;
+    var cands = freeRects.map(function (f) {
+      return { x: f.x + margin, y: f.y + margin, w: f.w, h: f.h };
+    }).map(function (r) {
+      var top = Math.min(r.y + r.h, limitY);
+      return { x: r.x, y: r.y, w: r.w, h: top - r.y };
+    }).filter(function (r) {
+      return r.w >= minRemnant - PACK_EPS && r.h >= minRemnant - PACK_EPS;
+    });
+
+    cands.sort(function (a, b) { return (b.w * b.h) - (a.w * a.h); });
+    var picked = [];
+    cands.forEach(function (r) {
+      var clash = picked.some(function (p) {
+        return !(r.x + r.w <= p.x + PACK_EPS || p.x + p.w <= r.x + PACK_EPS ||
+                 r.y + r.h <= p.y + PACK_EPS || p.y + p.h <= r.y + PACK_EPS);
+      });
+      if (!clash) picked.push(r);
+    });
+    return { cutY: pano ? cutY : null, pano: pano, offcuts: picked, usedMaxY: usedMaxY };
+  }
+
+  function packPieces(pieceInstances, sheetW, sheetH, pitch, margin, seed, minRemnant) {
+    minRemnant = (minRemnant === undefined || minRemnant === null) ? 200 : minRemnant;
+    var s = (seed === undefined || seed === null) ? 0 : seed;
+    var rng = mulberry32(s);
+    var strat = SORT_STRATEGIES[Math.abs(s) % SORT_STRATEGIES.length];
+    var typeJitter = {};
+    function jitterFor(refId) {
+      if (!(refId in typeJitter)) typeJitter[refId] = rng();
+      return typeJitter[refId];
+    }
+
+    // órdenes de pieza a probar: el que dicta la semilla (con jitter por
+    // tipo de pieza) más los cuatro deterministas
+    var orders = [pieceInstances.map(function (p) { return { p: p, k: strat(p) * (0.65 + 0.7 * jitterFor(p.refPieceId)) }; })];
+    SORT_STRATEGIES.forEach(function (fn) {
+      orders.push(pieceInstances.map(function (p) { return { p: p, k: fn(p) }; }));
+    });
+    var itemLists = orders.map(function (dec) {
+      return dec.slice().sort(function (a, b) { return b.k - a.k; }).map(function (d) { return d.p; });
+    });
+
+    var best = null, bestVec = null;
+    itemLists.forEach(function (items) {
+      FIT_HEURISTICS.forEach(function (heur) {
+        var run = packRun(items, sheetW, sheetH, pitch, margin, heur);
+        var remnants = run.sheets.map(function (sh, i) {
+          return computeRemnant(sh, run.freeBySheet[i], sheetW, sheetH, pitch, margin, minRemnant);
+        });
+        var biggest = 0, totalRecoverable = 0;
+        remnants.forEach(function (rm) {
+          var a = rm.pano ? rm.pano.w * rm.pano.h : 0;
+          if (rm.pano) totalRecoverable += rm.pano.w * rm.pano.h;
+          rm.offcuts.forEach(function (o) { a = Math.max(a, o.w * o.h); totalRecoverable += o.w * o.h; });
+          biggest = Math.max(biggest, a);
+        });
+        var vec = [run.unplaced.length, run.sheets.length, -biggest, -totalRecoverable];
+        if (!bestVec || cmpVec(vec, bestVec) < 0) {
+          bestVec = vec;
+          best = { sheets: run.sheets, unplaced: run.unplaced, freeBySheet: run.freeBySheet, remnants: remnants, heuristic: heur.name, biggest: biggest, totalRecoverable: totalRecoverable };
+        }
+      });
+    });
+    return best;
+  }
+
+
+  // ===============================================================
+  // ---------------------------------------------------------------
+  // ANIDADO POR CONTORNO REAL (raster / bottom-left fill)
+  //
+  // El packer por rectángulo envolvente desperdicia todo el hueco de una
+  // pieza cóncava (una L, una U, un gancho). Acá cada pieza se rasteriza a
+  // una máscara de bits con relleno par-impar, se prueba en 4 giros
+  // (0/90/180/270) y se deja caer por gravedad sobre la plancha, de modo que
+  // una pieza puede encajar dentro del hueco de otra.
+  //
+  // El pitch se respeta dilatando la máscara con que se testea la colisión,
+  // mientras que la ocupación se marca con la máscara sin dilatar: así la
+  // separación real entre dos piezas nunca baja del pitch.
+  // ---------------------------------------------------------------
+
+  function arcPoints(cx, cy, r, a1, a2, seg) {
+    seg = seg || 24;
+    var sweep = a2 - a1;
+    while (sweep <= 0) sweep += 360;
+    var pts = [];
+    for (var i = 0; i <= seg; i++) {
+      var a = (a1 + sweep * i / seg) * Math.PI / 180;
+      pts.push([cx + r * Math.cos(a), cy + r * Math.sin(a)]);
+    }
+    return pts;
+  }
+
+  // entidades -> lista de polilíneas (cada una una secuencia de puntos)
+  function entitiesToLoops(entities) {
+    var loops = [];
+    entities.forEach(function (e) {
+      if (e.type === 'LINE') loops.push([[e.x1, e.y1], [e.x2, e.y2]]);
+      else if (e.type === 'POLYLINE') loops.push(e.points.map(function (p) { return [p[0], p[1]]; }));
+      else if (e.type === 'CIRCLE') loops.push(arcPoints(e.cx, e.cy, e.r, 0, 360, 32));
+      else if (e.type === 'ARC') loops.push(arcPoints(e.cx, e.cy, e.r, e.a1, e.a2, 24));
+    });
+    return loops;
+  }
+
+  // gira los loops 90*q grados dentro de un marco w x h
+  function rotateLoops(loops, w, h, q) {
+    q = ((q % 4) + 4) % 4;
+    if (q === 0) return loops;
+    return loops.map(function (pts) {
+      return pts.map(function (p) {
+        var x = p[0], y = p[1];
+        if (q === 1) return [h - y, x];        // 90°
+        if (q === 2) return [w - x, h - y];    // 180°
+        return [y, w - x];                     // 270°
+      });
+    });
+  }
+
+  function WORDS(cols) { return (cols + 31) >> 5; }
+
+  // Rasteriza con relleno par-impar: los huecos internos quedan libres y,
+  // sobre todo, las concavidades NO se rellenan (que es lo que permite
+  // encajar una pieza dentro de otra).
+  function rasterize(loops, w, h, cell) {
+    var cols = Math.max(1, Math.ceil(w / cell));
+    var rows = Math.max(1, Math.ceil(h / cell));
+    var wpr = WORDS(cols);
+    var bits = new Uint32Array(rows * wpr);
+
+    // segmentos del contorno (allSegs) y los no horizontales (segs), que son
+    // los únicos que cruzan una línea de barrido
+    var allSegs = [], segs = [];
+    loops.forEach(function (pts) {
+      if (pts.length < 2) return;
+      for (var i = 0; i < pts.length; i++) {
+        var a = pts[i], b = pts[(i + 1) % pts.length];
+        if (i === pts.length - 1) {
+          if (Math.abs(a[0] - pts[0][0]) < 1e-9 && Math.abs(a[1] - pts[0][1]) < 1e-9) break;
+          b = pts[0];
+        }
+        allSegs.push([a[0], a[1], b[0], b[1]]);
+        if (a[1] !== b[1]) segs.push([a[0], a[1], b[0], b[1]]);
+      }
+    });
+
+    function setCell(c, r) {
+      if (c < 0 || r < 0 || c >= cols || r >= rows) return;
+      bits[r * wpr + (c >> 5)] |= (1 << (c & 31));
+    }
+
+    // (1) relleno interior por barrido par-impar en el centro de cada fila.
+    //     Toda celda ÍNTEGRAMENTE dentro de la pieza queda marcada acá.
+    var xs = [];
+    for (var r = 0; r < rows; r++) {
+      var yc = (r + 0.5) * cell;
+      xs.length = 0;
+      for (var s = 0; s < segs.length; s++) {
+        var x1 = segs[s][0], y1 = segs[s][1], x2 = segs[s][2], y2 = segs[s][3];
+        if ((y1 <= yc && y2 > yc) || (y2 <= yc && y1 > yc)) {
+          xs.push(x1 + (yc - y1) * (x2 - x1) / (y2 - y1));
+        }
+      }
+      if (xs.length < 2) continue;
+      xs.sort(function (a, b) { return a - b; });
+      for (var k = 0; k + 1 < xs.length; k += 2) {
+        var c0 = Math.floor(xs[k] / cell), c1 = Math.ceil(xs[k + 1] / cell) - 1;
+        for (var c = c0; c <= c1; c++) setCell(c, r);
+      }
+    }
+
+    // (2) contorno recorrido celda por celda (DDA exacto): marca TODA celda
+    //     que el perímetro atraviesa, o sea las parcialmente cubiertas.
+    //     (1)+(2) hacen que la máscara CONTENGA a la pieza completa, que es
+    //     lo que permite garantizar que la separación real entre dos piezas
+    //     nunca queda por debajo del pitch.
+    for (var sg = 0; sg < allSegs.length; sg++) {
+      traverseCells(allSegs[sg][0], allSegs[sg][1], allSegs[sg][2], allSegs[sg][3], cell, setCell);
+    }
+    return { cols: cols, rows: rows, wpr: wpr, bits: bits };
+  }
+
+  // Recorrido de rejilla estilo Amanatides–Woo: visita exactamente las celdas
+  // que cruza el segmento a→b.
+  function traverseCells(ax, ay, bx, by, cell, mark) {
+    var c = Math.floor(ax / cell), r = Math.floor(ay / cell);
+    var cEnd = Math.floor(bx / cell), rEnd = Math.floor(by / cell);
+    var dx = bx - ax, dy = by - ay;
+    var stepX = dx > 0 ? 1 : (dx < 0 ? -1 : 0);
+    var stepY = dy > 0 ? 1 : (dy < 0 ? -1 : 0);
+    var tMaxX = Infinity, tDeltaX = Infinity, tMaxY = Infinity, tDeltaY = Infinity;
+    if (stepX !== 0) {
+      var nextX = (stepX > 0 ? (c + 1) * cell : c * cell);
+      tMaxX = (nextX - ax) / dx;
+      tDeltaX = cell / Math.abs(dx);
+    }
+    if (stepY !== 0) {
+      var nextY = (stepY > 0 ? (r + 1) * cell : r * cell);
+      tMaxY = (nextY - ay) / dy;
+      tDeltaY = cell / Math.abs(dy);
+    }
+    mark(c, r);
+    var guard = 0;
+    while ((c !== cEnd || r !== rEnd) && guard++ < 100000) {
+      if (tMaxX < tMaxY) { c += stepX; tMaxX += tDeltaX; }
+      else { r += stepY; tMaxY += tDeltaY; }
+      if (tMaxX > 1 && tMaxY > 1 && c === cEnd && r === rEnd) { mark(c, r); break; }
+      mark(c, r);
+    }
+  }
+
+  function maskGet(m, c, r) {
+    if (c < 0 || r < 0 || c >= m.cols || r >= m.rows) return 0;
+    return (m.bits[r * m.wpr + (c >> 5)] >>> (c & 31)) & 1;
+  }
+
+  // dilatación por distancia de Chebyshev (conservadora: nunca deja menos
+  // separación de la pedida)
+  function dilate(m, rad) {
+    if (rad <= 0) return m;
+    var cols = m.cols + 2 * rad, rows = m.rows + 2 * rad, wpr = WORDS(cols);
+    var out = { cols: cols, rows: rows, wpr: wpr, bits: new Uint32Array(rows * wpr) };
+    for (var r = 0; r < m.rows; r++) {
+      for (var c = 0; c < m.cols; c++) {
+        if (!maskGet(m, c, r)) continue;
+        for (var dr = -rad; dr <= rad; dr++) {
+          var rr = r + rad + dr;
+          for (var dc = -rad; dc <= rad; dc++) {
+            var cc = c + rad + dc;
+            out.bits[rr * wpr + (cc >> 5)] |= (1 << (cc & 31));
+          }
+        }
+      }
+    }
+    out.pad = rad;
+    return out;
+  }
+
+  // perfil inferior por columna (fila más baja ocupada, -1 si vacía)
+  function bottomProfile(m) {
+    var prof = new Int32Array(m.cols).fill(-1);
+    for (var c = 0; c < m.cols; c++) {
+      for (var r = 0; r < m.rows; r++) {
+        if (maskGet(m, c, r)) { prof[c] = r; break; }
+      }
+    }
+    return prof;
+  }
+
+  function rowSpans(m) {
+    // por fila: primer y último word con bits, para acelerar la colisión
+    var lo = new Int32Array(m.rows).fill(-1), hi = new Int32Array(m.rows).fill(-1);
+    for (var r = 0; r < m.rows; r++) {
+      for (var w = 0; w < m.wpr; w++) {
+        if (m.bits[r * m.wpr + w]) { if (lo[r] < 0) lo[r] = w; hi[r] = w; }
+      }
+    }
+    return { lo: lo, hi: hi };
+  }
+
+  function makeSheet(cols, rows) {
+    var wpr = WORDS(cols);
+    return { cols: cols, rows: rows, wpr: wpr, bits: new Uint32Array(rows * wpr), colHeight: new Int32Array(cols) };
+  }
+
+  function collides(sheet, mask, spans, x, y) {
+    if (x < 0 || y < 0) return true;
+    if (x + mask.cols > sheet.cols || y + mask.rows > sheet.rows) return true;
+    var shift = x & 31, wordOff = x >>> 5;
+    for (var r = 0; r < mask.rows; r++) {
+      var lo = spans.lo[r];
+      if (lo < 0) continue;
+      var hi = spans.hi[r];
+      var sBase = (y + r) * sheet.wpr, mBase = r * mask.wpr;
+      for (var w = lo; w <= hi; w++) {
+        var mv = mask.bits[mBase + w];
+        if (!mv) continue;
+        var idx = wordOff + w;
+        if (sheet.bits[sBase + idx] & ((mv << shift) >>> 0)) return true;
+        if (shift) {
+          var carry = mv >>> (32 - shift);
+          if (carry && (sheet.bits[sBase + idx + 1] & carry)) return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  function stamp(sheet, mask, spans, x, y) {
+    var shift = x & 31, wordOff = x >>> 5;
+    for (var r = 0; r < mask.rows; r++) {
+      var lo = spans.lo[r];
+      if (lo < 0) continue;
+      var hi = spans.hi[r];
+      var sBase = (y + r) * sheet.wpr, mBase = r * mask.wpr;
+      for (var w = lo; w <= hi; w++) {
+        var mv = mask.bits[mBase + w];
+        if (!mv) continue;
+        var idx = wordOff + w;
+        sheet.bits[sBase + idx] |= (mv << shift) >>> 0;
+        if (shift) {
+          var carry = mv >>> (32 - shift);
+          if (carry) sheet.bits[sBase + idx + 1] |= carry;
+        }
+      }
+    }
+    // actualizar alturas por columna
+    for (var c = 0; c < mask.cols; c++) {
+      var sc = x + c;
+      if (sc >= sheet.cols) break;
+      for (var rr = mask.rows - 1; rr >= 0; rr--) {
+        if (maskGet(mask, c, rr)) {
+          var top = y + rr + 1;
+          if (top > sheet.colHeight[sc]) sheet.colHeight[sc] = top;
+          break;
+        }
+      }
+    }
+  }
+
+  // Deja caer la máscara y devuelve la mejor posición (y más baja, luego x
+  // más a la izquierda) o null.
+  function dropPlace(sheet, mask, spans, prof) {
+    var best = null;
+    var maxX = sheet.cols - mask.cols;
+    for (var x = 0; x <= maxX; x++) {
+      var y = 0;
+      for (var c = 0; c < mask.cols; c++) {
+        if (prof[c] < 0) continue;
+        var cand = sheet.colHeight[x + c] - prof[c];
+        if (cand > y) y = cand;
+      }
+      if (best && y >= best.y) continue;          // ya no puede mejorar
+      if (y + mask.rows > sheet.rows) continue;
+      var tries = 0;
+      while (y + mask.rows <= sheet.rows && tries < 400) {
+        if (!collides(sheet, mask, spans, x, y)) break;
+        y++; tries++;
+        if (best && y >= best.y) break;
+      }
+      if (y + mask.rows > sheet.rows || tries >= 400) continue;
+      if (collides(sheet, mask, spans, x, y)) continue;
+      if (!best || y < best.y) best = { x: x, y: y };
+    }
+    return best;
+  }
+
+  // --------------------------------------------------------------
+  // API principal
+  // pieces: { id, w, h, entities, allowRotate }
+  // instances: { id, refPieceId }
+  // --------------------------------------------------------------
+  function packShapes(pieceById, instances, sheetW, sheetH, pitch, margin, cell, opts) {
+    opts = opts || {};
+    var usableW = sheetW - 2 * margin, usableH = sheetH - 2 * margin;
+    if (usableW <= 0 || usableH <= 0) return { sheets: [], unplaced: instances.slice(), cell: cell };
+    var cols = Math.floor(usableW / cell), rows = Math.floor(usableH / cell);
+    var pad = Math.max(1, Math.ceil(pitch / cell));
+
+    // variantes por pieza (giros permitidos)
+    var variants = {};
+    function variantsFor(refId) {
+      if (variants[refId]) return variants[refId];
+      var p = pieceById(refId);
+      var loops = entitiesToLoops(p.entities);
+      var turns = p.allowRotate ? [0, 1, 2, 3] : [0, 2];
+      var list = [];
+      turns.forEach(function (q) {
+        var vw = (q % 2) ? p.h : p.w, vh = (q % 2) ? p.w : p.h;
+        var raw = rasterize(rotateLoops(loops, p.w, p.h, q), vw, vh, cell);
+        var dil = dilate(raw, pad);
+        list.push({
+          q: q, w: vw, h: vh,
+          raw: raw, rawSpans: rowSpans(raw),
+          dil: dil, dilSpans: rowSpans(dil), dilProf: bottomProfile(dil),
+          area: countBits(raw) * cell * cell
+        });
+      });
+      variants[refId] = list;
+      return list;
+    }
+
+    // Procesar de mayor a menor área real: es lo que más reduce el espacio
+    // muerto (piezas grandes primero fijan el "relieve" de la plancha, las
+    // chicas después se cuelan en lo que va quedando).
+    function areaOf(inst) {
+      var p = pieceById(inst.refPieceId);
+      return (p && p.area) || 0;
+    }
+    var order = instances.slice().sort(function (a, b) { return areaOf(b) - areaOf(a); });
+
+    function tryPlaceOn(entry, inst) {
+      var vs = variantsFor(inst.refPieceId);
+      var best = null;
+      for (var v = 0; v < vs.length; v++) {
+        var vr = vs[v];
+        if (vr.dil.cols > cols || vr.dil.rows > rows) continue;
+        var pos = dropPlace(entry.grid, vr.dil, vr.dilSpans, vr.dilProf);
+        if (!pos) continue;
+        if (!best || pos.y < best.y || (pos.y === best.y && pos.x < best.x)) {
+          best = { x: pos.x, y: pos.y, v: vr };
+        }
+      }
+      if (!best) return false;
+      // la posición viene de la máscara dilatada: la pieza real va corrida
+      var rx = best.x + pad, ry = best.y + pad;
+      stamp(entry.grid, best.v.raw, best.v.rawSpans, rx, ry);
+      entry.placements.push({
+        id: inst.id, refPieceId: inst.refPieceId,
+        x: rx * cell + margin, y: ry * cell + margin,
+        w: best.v.w, h: best.v.h,
+        rot: best.v.q, rotated: best.v.q === 1,
+        area: best.v.area
+      });
+      return true;
+    }
+
+    // "First fit decreasing" a través de TODAS las planchas ya abiertas:
+    // antes de abrir una plancha nueva, se intenta encajar la pieza en
+    // cualquier hueco que haya quedado en una plancha anterior. Esto es lo
+    // que evita dejar paños a medio llenar mientras se abren planchas nuevas.
+    var sheets = [], grids = [], unplaced = [];
+    for (var i = 0; i < order.length; i++) {
+      var inst = order[i], placedOk = false;
+      for (var s = 0; s < sheets.length; s++) {
+        if (tryPlaceOn(sheets[s], inst)) { placedOk = true; break; }
+      }
+      if (!placedOk) {
+        var entry = { placements: [], grid: makeSheet(cols, rows) };
+        if (tryPlaceOn(entry, inst)) {
+          sheets.push(entry);
+          grids.push(entry.grid);
+          placedOk = true;
+        }
+      }
+      if (!placedOk) unplaced.push(inst);
+    }
+    return {
+      sheets: sheets.map(function (e) { return e.placements; }),
+      unplaced: unplaced, grids: grids, cell: cell, cols: cols, rows: rows, margin: margin
+    };
+  }
+
+  function countBits(m) {
+    var n = 0;
+    for (var i = 0; i < m.bits.length; i++) {
+      var v = m.bits[i];
+      while (v) { v &= v - 1; n++; }
+    }
+    return n;
+  }
+
+  // Área real del contorno de una pieza (no de su rectángulo envolvente),
+  // por fórmula del área de Gauss sobre los loops cerrados. Es lo que
+  // permite informar el aprovechamiento de material honesto: una pieza en
+  // L ocupa la mitad de su envolvente.
+  function realAreaOf(entities) {
+    var loops = entitiesToLoops(entities);
+    var total = 0;
+    loops.forEach(function (pts) {
+      if (pts.length < 3) return;
+      var a = 0;
+      for (var i = 0; i < pts.length; i++) {
+        var j = (i + 1) % pts.length;
+        a += pts[i][0] * pts[j][1] - pts[j][0] * pts[i][1];
+      }
+      total += Math.abs(a) / 2;
+    });
+    return total;
+  }
+
+  // Rectángulos vacíos máximos de una rejilla de ocupación (histograma por
+  // filas). Es el equivalente, para el anidado por contorno, de la lista de
+  // rectángulos libres que entrega MaxRects.
+  function freeRectsFromGrid(sheetGrid, cell, minSideMm) {
+    var cols = sheetGrid.cols, rows = sheetGrid.rows;
+    var minSide = Math.max(1, Math.ceil(minSideMm / cell));
+    var heights = new Int32Array(cols);
+    var found = [];
+    for (var r = 0; r < rows; r++) {
+      for (var c = 0; c < cols; c++) {
+        heights[c] = maskGet(sheetGrid, c, r) ? 0 : heights[c] + 1;
+      }
+      // mayor rectángulo por histograma en esta fila
+      var stack = [];
+      for (var c2 = 0; c2 <= cols; c2++) {
+        var hcur = c2 === cols ? 0 : heights[c2];
+        var start = c2;
+        while (stack.length && stack[stack.length - 1].h >= hcur) {
+          var top = stack.pop();
+          var wCells = c2 - top.i;
+          if (top.h >= minSide && wCells >= minSide) {
+            found.push({ c: top.i, r: r - top.h + 1, cw: wCells, ch: top.h, area: wCells * top.h });
+          }
+          start = top.i;
+        }
+        stack.push({ i: start, h: hcur });
+      }
+    }
+    found.sort(function (a, b) { return b.area - a.area; });
+    // quedarse con un subconjunto disjunto, del más grande al más chico
+    var picked = [];
+    for (var i = 0; i < found.length && picked.length < 12; i++) {
+      var f = found[i];
+      var clash = picked.some(function (p) {
+        return !(f.c + f.cw <= p.c || p.c + p.cw <= f.c || f.r + f.ch <= p.r || p.r + p.ch <= f.r);
+      });
+      if (!clash) picked.push(f);
+    }
+    return picked;
+  }
+  // ===============================================================
+
+  // ---------------------------------------------------------------
+  // DXF WRITER — formato R12 / AC1009 (POLYLINE-VERTEX-SEQEND, sin
+  // LWPOLYLINE ni tablas). Es el formato "mínimo común" que abre sin
+  // problemas en cualquier versión de AutoCAD y en el software de
+  // cualquier máquina de corte láser/plasma/router.
+  // ---------------------------------------------------------------
+  // Capa "0" = piezas; "DESPUNTE" = líneas de corte de despunte, para poder
+  // activarlas o apagarlas en la máquina sin generar otro archivo.
+  var LAYER_PIEZAS = '0';
+  var LAYER_DESPUNTE = 'DESPUNTE';
+
+  function dxfEntityText(e) {
+    var L = e.layer || LAYER_PIEZAS;
+    if (e.type === 'LINE') {
+      return '0\nLINE\n8\n' + L + '\n10\n' + e.x1.toFixed(4) + '\n20\n' + e.y1.toFixed(4) + '\n30\n0.0\n11\n' + e.x2.toFixed(4) + '\n21\n' + e.y2.toFixed(4) + '\n31\n0.0\n';
+    }
+    if (e.type === 'CIRCLE') {
+      return '0\nCIRCLE\n8\n' + L + '\n10\n' + e.cx.toFixed(4) + '\n20\n' + e.cy.toFixed(4) + '\n30\n0.0\n40\n' + e.r.toFixed(4) + '\n';
+    }
+    if (e.type === 'ARC') {
+      return '0\nARC\n8\n' + L + '\n10\n' + e.cx.toFixed(4) + '\n20\n' + e.cy.toFixed(4) + '\n30\n0.0\n40\n' + e.r.toFixed(4) + '\n50\n' + e.a1.toFixed(4) + '\n51\n' + e.a2.toFixed(4) + '\n';
+    }
+    if (e.type === 'POLYLINE') {
+      var s = '0\nPOLYLINE\n8\n' + L + '\n66\n1\n70\n' + (e.closed ? 1 : 0) + '\n';
+      e.points.forEach(function (p) { s += '0\nVERTEX\n8\n' + L + '\n10\n' + p[0].toFixed(4) + '\n20\n' + p[1].toFixed(4) + '\n30\n0.0\n'; });
+      s += '0\nSEQEND\n8\n' + L + '\n';
+      return s;
+    }
+    return '';
+  }
+
+  // Tabla de capas R12: define "0" (blanco) y "DESPUNTE" (rojo) para que
+  // AutoCAD y el software de la máquina las muestren bien separadas.
+  function dxfLayerTable() {
+    var s = '0\nSECTION\n2\nTABLES\n';
+    s += '0\nTABLE\n2\nLAYER\n70\n2\n';
+    s += '0\nLAYER\n2\n' + LAYER_PIEZAS + '\n70\n0\n62\n7\n6\nCONTINUOUS\n';
+    s += '0\nLAYER\n2\n' + LAYER_DESPUNTE + '\n70\n0\n62\n1\n6\nCONTINUOUS\n';
+    s += '0\nENDTAB\n0\nENDSEC\n';
+    return s;
+  }
+
+  function buildDXF(entitiesList, sheetW, sheetH, opts) {
+    opts = opts || {};
+    var s = '0\nSECTION\n2\nHEADER\n';
+    s += '9\n$ACADVER\n1\nAC1009\n';
+    s += '9\n$INSBASE\n10\n0.0\n20\n0.0\n30\n0.0\n';
+    s += '9\n$EXTMIN\n10\n0.0\n20\n0.0\n30\n0.0\n';
+    s += '9\n$EXTMAX\n10\n' + sheetW.toFixed(4) + '\n20\n' + sheetH.toFixed(4) + '\n30\n0.0\n';
+    s += '0\nENDSEC\n';
+    s += dxfLayerTable();
+    s += '0\nSECTION\n2\nENTITIES\n';
+    if (opts.drawSheetBorder) {
+      s += dxfEntityText({ type: 'POLYLINE', closed: true, points: [[0, 0], [sheetW, 0], [sheetW, sheetH], [0, sheetH]] });
+    }
+    entitiesList.forEach(function (e) { s += dxfEntityText(e); });
+    s += '0\nENDSEC\n0\nEOF\n';
+    return s;
+  }
+
+  function downloadBlob(filename, blob) {
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+  }
+
+  function downloadText(filename, text) {
+    downloadBlob(filename, new Blob([text], { type: 'application/dxf' }));
+  }
+
+  // ---------------------------------------------------------------
+  // UI HELPERS
+  // ---------------------------------------------------------------
+  var $ = function (id) { return document.getElementById(id); };
+
+  function fmt(n) {
+    return (Math.round(n * 100) / 100).toString();
+  }
+
+  function setStatus(msg, cls) {
+    var el = $('uploadStatus');
+    el.textContent = msg;
+    el.className = 'status-line' + (cls ? ' ' + cls : '');
+  }
+
+  // ---- Piezas: agregar / quitar / tabla ----
+  function addPiece(p) {
+    p.id = 'pc' + (++pieceCounter);
+    // área real del contorno, para informar aprovechamiento de material
+    // honesto: una pieza en L ocupa cerca de la mitad de su envolvente
+    try { p.area = realAreaOf(p.entities); } catch (e) { p.area = p.w * p.h; }
+    if (!p.area || !isFinite(p.area)) p.area = p.w * p.h;
+    state.pieces.push(p);
+    renderPieceTable();
+  }
+
+  function removePiece(id) {
+    state.pieces = state.pieces.filter(function (p) { return p.id !== id; });
+    renderPieceTable();
+  }
+
+  function renderPieceTable() {
+    var tbody = $('pieceTableBody');
+    if (state.pieces.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" class="empty-msg">Aún no has agregado piezas.</td></tr>';
+      return;
+    }
+    var rows = state.pieces.map(function (p) {
+      return '<tr data-id="' + p.id + '">' +
+        '<td class="name-cell">' + escapeHtml(p.name) + '</td>' +
+        '<td><span class="tag' + (p.source === 'dxf' ? ' dxf' : '') + '">' + (p.source === 'dxf' ? 'DXF' : 'Rect') + '</span></td>' +
+        '<td class="dim-cell">' + fmt(p.w) + ' × ' + fmt(p.h) + ' mm</td>' +
+        '<td><input type="number" class="qty-input" min="1" step="1" value="' + p.qty + '" data-role="qty" data-id="' + p.id + '"></td>' +
+        '<td style="text-align:center"><input type="checkbox" data-role="rotate" data-id="' + p.id + '" ' + (p.allowRotate ? 'checked' : '') + '></td>' +
+        '<td><button class="btn danger small" data-role="remove" data-id="' + p.id + '">✕</button></td>' +
+        '</tr>';
+    }).join('');
+    tbody.innerHTML = rows;
+  }
+
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, function (c) {
+      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
+    });
+  }
+
+  $('pieceTableBody').addEventListener('input', function (e) {
+    var t = e.target;
+    if (t.dataset.role === 'qty') {
+      var p = state.pieces.find(function (pp) { return pp.id === t.dataset.id; });
+      if (p) {
+        var v = parseInt(t.value, 10);
+        p.qty = (isNaN(v) || v < 1) ? 1 : v;
+      }
+    }
+  });
+  $('pieceTableBody').addEventListener('change', function (e) {
+    var t = e.target;
+    if (t.dataset.role === 'rotate') {
+      var p = state.pieces.find(function (pp) { return pp.id === t.dataset.id; });
+      if (p) p.allowRotate = t.checked;
+    }
+  });
+  $('pieceTableBody').addEventListener('click', function (e) {
+    var t = e.target;
+    if (t.dataset.role === 'remove') removePiece(t.dataset.id);
+  });
+
+  // ---- Agregar manual ----
+  $('btnAddManual').addEventListener('click', function () {
+    var name = $('pName').value.trim();
+    var w = parseFloat($('pW').value);
+    var h = parseFloat($('pH').value);
+    var qty = parseInt($('pQty').value, 10) || 1;
+    if (!name) name = 'Pieza ' + (pieceCounter + 1);
+    if (!w || !h || w <= 0 || h <= 0) { setStatus('Ingresa ancho y alto válidos para la pieza.', 'err'); return; }
+    addPiece({ name: name, source: 'rect', w: w, h: h, qty: qty, allowRotate: state.defaultRotate, entities: rectEntities(w, h) });
+    $('pName').value = ''; $('pW').value = ''; $('pH').value = ''; $('pQty').value = '1';
+    setStatus('Pieza "' + name + '" agregada.', 'ok');
+  });
+
+  // ---- Agregar lote de texto ----
+  $('btnAddBatch').addEventListener('click', function () {
+    var raw = $('batchText').value;
+    var lines = raw.split(/\n/).map(function (l) { return l.trim(); }).filter(Boolean);
+    var added = 0, failed = 0;
+    lines.forEach(function (line) {
+      var parts = line.split(/[,;\t]+/).map(function (s) { return s.trim(); });
+      if (parts.length < 3) { failed++; return; }
+      var name = parts[0] || ('Pieza ' + (pieceCounter + 1));
+      var w = parseFloat(parts[1]);
+      var h = parseFloat(parts[2]);
+      var qty = parts.length >= 4 ? (parseInt(parts[3], 10) || 1) : 1;
+      if (!w || !h || w <= 0 || h <= 0) { failed++; return; }
+      addPiece({ name: name, source: 'rect', w: w, h: h, qty: qty, allowRotate: state.defaultRotate, entities: rectEntities(w, h) });
+      added++;
+    });
+    if (added) $('batchText').value = '';
+    setStatus(added + ' pieza(s) agregada(s) desde el lote.' + (failed ? ' ' + failed + ' línea(s) inválida(s) ignorada(s).' : ''), failed ? 'warn' : 'ok');
+  });
+
+  // ---- Subir DXF (lote o unidad) ----
+  $('dxfUnit').addEventListener('change', function () {
+    state.dxfUnit = $('dxfUnit').value;
+  });
+
+  $('dxfInput').addEventListener('change', function (e) {
+    var files = Array.prototype.slice.call(e.target.files || []);
+    if (!files.length) return;
+    var okCount = 0, failCount = 0, pending = files.length;
+    var unitScale = DXF_UNIT_SCALE[state.dxfUnit] || 1;
+    files.forEach(function (file) {
+      var reader = new FileReader();
+      reader.onload = function () {
+        try {
+          var raw = parseDXF(String(reader.result));
+          if (unitScale !== 1) raw = scaleEntities(raw, unitScale);
+          var norm = normalizeEntities(raw);
+          if (norm.w <= 0 || norm.h <= 0 || raw.length === 0) {
+            failCount++;
+          } else {
+            var name = file.name.replace(/\.dxf$/i, '');
+            addPiece({ name: name, source: 'dxf', w: norm.w, h: norm.h, qty: 1, allowRotate: state.defaultRotate, entities: norm.entities });
+            okCount++;
+          }
+        } catch (err) {
+          failCount++;
+        }
+        pending--;
+        if (pending === 0) {
+          var scaleNote = unitScale !== 1 ? (' (escala ' + state.dxfUnit + '→mm aplicada ×' + unitScale + ')') : '';
+          setStatus(okCount + ' archivo(s) DXF cargado(s)' + scaleNote + '.' + (failCount ? ' ' + failCount + ' no se pudieron leer.' : ''), failCount ? 'warn' : 'ok');
+          e.target.value = '';
+        }
+      };
+      reader.onerror = function () {
+        failCount++; pending--;
+        if (pending === 0) setStatus(okCount + ' archivo(s) DXF cargado(s), ' + failCount + ' con error de lectura.', 'warn');
+      };
+      reader.readAsText(file);
+    });
+  });
+
+  // ---------------------------------------------------------------
+  // CONFIG PLANCHA: presets, dimensiones, pitch, margen
+  // ---------------------------------------------------------------
+  function markActivePreset() {
+    var chips = document.querySelectorAll('.chip');
+    chips.forEach(function (c) {
+      var w = parseFloat(c.dataset.w), h = parseFloat(c.dataset.h);
+      c.classList.toggle('active', w === state.sheetW && h === state.sheetH);
+    });
+  }
+
+  document.querySelectorAll('.chip').forEach(function (chip) {
+    chip.addEventListener('click', function () {
+      state.sheetW = parseFloat(chip.dataset.w);
+      state.sheetH = parseFloat(chip.dataset.h);
+      $('sheetW').value = state.sheetW;
+      $('sheetH').value = state.sheetH;
+      markActivePreset();
+    });
+  });
+
+  $('sheetW').addEventListener('input', function () {
+    var v = parseFloat($('sheetW').value);
+    state.sheetW = (v > 0) ? v : state.sheetW;
+    markActivePreset();
+  });
+  $('sheetH').addEventListener('input', function () {
+    var v = parseFloat($('sheetH').value);
+    state.sheetH = (v > 0) ? v : state.sheetH;
+    markActivePreset();
+  });
+
+  $('pitchSlider').addEventListener('input', function () {
+    state.pitch = parseFloat($('pitchSlider').value);
+    $('pitchVal').textContent = fmt(state.pitch) + ' mm';
+  });
+  $('marginSlider').addEventListener('input', function () {
+    state.margin = parseFloat($('marginSlider').value);
+    $('marginVal').textContent = fmt(state.margin) + ' mm';
+  });
+  $('defaultRotate').addEventListener('change', function () {
+    state.defaultRotate = $('defaultRotate').checked;
+  });
+  $('shapeNest').addEventListener('change', function () {
+    state.shapeNest = $('shapeNest').checked;
+  });
+  $('nestCellSlider').addEventListener('input', function () {
+    state.nestCell = parseFloat($('nestCellSlider').value);
+    $('nestCellVal').textContent = fmt(state.nestCell) + ' mm';
+  });
+  $('markRemnant').addEventListener('change', function () {
+    state.markRemnant = $('markRemnant').checked;
+    if (state.result && !state.result.error && state.result.sheets.length) rebuildAllSheetSVGs(state.result);
+  });
+  $('remnantInDxf').addEventListener('change', function () {
+    state.remnantInDxf = $('remnantInDxf').checked;
+  });
+  $('minRemnantSlider').addEventListener('input', function () {
+    state.minRemnant = parseFloat($('minRemnantSlider').value);
+    $('minRemnantVal').textContent = fmt(state.minRemnant) + ' mm';
+  });
+  $('pdfFormat').addEventListener('change', function () {
+    state.pdfFormat = $('pdfFormat').value;
+  });
+  $('jobName').addEventListener('input', function () {
+    state.jobName = $('jobName').value;
+  });
+  $('labelSizeSlider').addEventListener('input', function () {
+    state.labelSizeMm = parseFloat($('labelSizeSlider').value);
+    $('labelSizeVal').textContent = fmt(state.labelSizeMm) + ' mm';
+    if (state.result && !state.result.error && state.result.sheets.length) rebuildAllSheetSVGs(state.result);
+  });
+
+  $('seedInput').value = state.seed;
+  $('seedInput').addEventListener('input', function () {
+    var v = parseInt($('seedInput').value, 10);
+    state.seed = isNaN(v) ? 0 : v;
+  });
+  $('btnRandomSeed').addEventListener('click', function () {
+    state.seed = Math.floor(Math.random() * 100000);
+    $('seedInput').value = state.seed;
+  });
+  $('btnBestSeed').addEventListener('click', function () {
+    if (state.pieces.length === 0) { $('seedStatus').textContent = 'Agrega piezas antes de probar variaciones.'; $('seedStatus').className = 'status-line err'; return; }
+    var trials = parseInt($('seedTrials').value, 10) || 60;
+    trials = Math.max(1, Math.min(500, trials));
+    var best = findBestSeed(trials);
+    if (!best) { $('seedStatus').textContent = 'No se pudo calcular ninguna variación.'; $('seedStatus').className = 'status-line err'; return; }
+    state.seed = best.seed;
+    $('seedInput').value = state.seed;
+    state.activeSheet = 0;
+    // la búsqueda de semilla corre solo el anidado por envolvente (sería
+    // lentísimo correr el de contorno decenas de veces); ya con la semilla
+    // ganadora se recalcula completo para no perder el anidado por contorno
+    var finalRes = computeResult();
+    state.result = finalRes;
+    renderResults(finalRes);
+    var msg = 'Se probaron ' + trials + ' semillas. Mejor: semilla #' + best.seed + ' → ' + best.sc.sheets + ' plancha(s), ' + fmt(best.sc.util) + '% de aprovechamiento promedio' + (best.sc.unplaced ? (', ' + best.sc.unplaced + ' pieza(s) sin ubicar') : '') + '.';
+    $('seedStatus').textContent = msg;
+    $('seedStatus').className = 'status-line ok';
+  });
+
+  markActivePreset();
+
+  // ---------------------------------------------------------------
+  // CÁLCULO / RENDER DE RESULTADOS
+  // ---------------------------------------------------------------
+  function buildInstances() {
+    var instances = [];
+    state.pieces.forEach(function (p) {
+      for (var k = 0; k < p.qty; k++) {
+        instances.push({ id: p.id + '_' + k, refPieceId: p.id, w: p.w, h: p.h, allowRotate: p.allowRotate });
+      }
+    });
+    return instances;
+  }
+
+  function computeResult() {
+    if (state.sheetW <= 2 * state.margin || state.sheetH <= 2 * state.margin) {
+      return { error: 'El margen de borde es demasiado grande para el tamaño de plancha actual.' };
+    }
+    if (state.pieces.length === 0) {
+      return { error: 'Agrega al menos una pieza antes de calcular.' };
+    }
+    var instances = buildInstances();
+    return packBest(instances);
+  }
+
+  // Corre el anidado por rectángulo envolvente y, si está activado, también
+  // el anidado por contorno real, y se queda con el mejor resultado:
+  // menos piezas sin ubicar, luego menos planchas, luego más despunte
+  // recuperable. Para piezas rectangulares suele ganar el primero; para
+  // piezas cóncavas (L, U, ganchos) gana ampliamente el segundo, porque
+  // puede encajar una pieza dentro del hueco de otra.
+  function packBest(instances) {
+    var bbox = packPieces(instances, state.sheetW, state.sheetH, state.pitch, state.margin, state.seed, state.minRemnant);
+    var bboxRes = {
+      sheets: bbox.sheets, unplaced: bbox.unplaced, remnants: bbox.remnants,
+      biggest: bbox.biggest, totalRecoverable: bbox.totalRecoverable, method: 'envolvente'
+    };
+    if (!state.shapeNest) return bboxRes;
+
+    var shapeRes = null;
+    try {
+      shapeRes = packByShape(instances);
+    } catch (err) {
+      shapeRes = null;   // ante cualquier problema, queda el resultado por envolvente
+    }
+    if (!shapeRes || !shapeRes.sheets.length) return bboxRes;
+
+    if (shapeRes.unplaced.length !== bboxRes.unplaced.length) {
+      return shapeRes.unplaced.length < bboxRes.unplaced.length ? shapeRes : bboxRes;
+    }
+    if (shapeRes.sheets.length !== bboxRes.sheets.length) {
+      return shapeRes.sheets.length < bboxRes.sheets.length ? shapeRes : bboxRes;
+    }
+    return (shapeRes.biggest || 0) >= (bboxRes.biggest || 0) ? shapeRes : bboxRes;
+  }
+
+  function packByShape(instances) {
+    var packed = packShapes(pieceById, instances, state.sheetW, state.sheetH,
+      state.pitch, state.margin, state.nestCell);
+    // despunte: corte transversal por sobre la última pieza + rectángulos
+    // vacíos máximos de la rejilla, por debajo de ese corte
+    var remnants = packed.sheets.map(function (sheet, i) {
+      var usedMaxY = 0;
+      sheet.forEach(function (p) { usedMaxY = Math.max(usedMaxY, p.y + p.h); });
+      var cutY = Math.min(state.sheetH, usedMaxY + state.pitch);
+      var pano = (state.sheetH - cutY >= state.minRemnant)
+        ? { x: 0, y: cutY, w: state.sheetW, h: state.sheetH - cutY } : null;
+      var limitY = pano ? cutY : state.sheetH;
+      var offcuts = freeRectsFromGrid(packed.grids[i], packed.cell, state.minRemnant)
+        .map(function (f) {
+          return {
+            x: f.c * packed.cell + state.margin, y: f.r * packed.cell + state.margin,
+            w: f.cw * packed.cell, h: f.ch * packed.cell
+          };
+        })
+        .map(function (r) { return { x: r.x, y: r.y, w: r.w, h: Math.min(r.y + r.h, limitY) - r.y }; })
+        .filter(function (r) { return r.w >= state.minRemnant && r.h >= state.minRemnant; });
+      return { cutY: pano ? cutY : null, pano: pano, offcuts: offcuts, usedMaxY: usedMaxY };
+    });
+
+    var biggest = 0, totalRecoverable = 0;
+    remnants.forEach(function (rm) {
+      var a = rm.pano ? rm.pano.w * rm.pano.h : 0;
+      if (rm.pano) totalRecoverable += rm.pano.w * rm.pano.h;
+      rm.offcuts.forEach(function (o) { a = Math.max(a, o.w * o.h); totalRecoverable += o.w * o.h; });
+      biggest = Math.max(biggest, a);
+    });
+    return {
+      sheets: packed.sheets, unplaced: packed.unplaced, remnants: remnants,
+      biggest: biggest, totalRecoverable: totalRecoverable, method: 'contorno'
+    };
+  }
+
+  function scoreResult(res) {
+    var util = res.sheets.length ? res.sheets.reduce(function (s, sh) { return s + sheetUtilOfRaw(sh); }, 0) / res.sheets.length : 0;
+    return { sheets: res.sheets.length, unplaced: res.unplaced.length, util: util, biggest: res.biggest || 0 };
+  }
+  // Menos piezas sin ubicar > menos planchas > mejor aprovechamiento >
+  // despunte recuperable más grande.
+  function scoreBetter(a, b) {
+    if (a.unplaced !== b.unplaced) return a.unplaced < b.unplaced;
+    if (a.sheets !== b.sheets) return a.sheets < b.sheets;
+    if (Math.abs(a.util - b.util) > 1e-6) return a.util > b.util;
+    return a.biggest > b.biggest;
+  }
+
+  // Prueba "trials" semillas distintas (0..trials-1) y deja activa la que
+  // logre menos piezas sin ubicar, luego menos planchas, luego mejor
+  // aprovechamiento promedio.
+  function findBestSeed(trials) {
+    var instances = buildInstances();
+    var best = null;
+    for (var seed = 0; seed < trials; seed++) {
+      var packed = packPieces(instances, state.sheetW, state.sheetH, state.pitch, state.margin, seed, state.minRemnant);
+      var res = { sheets: packed.sheets, unplaced: packed.unplaced, remnants: packed.remnants, biggest: packed.biggest, totalRecoverable: packed.totalRecoverable, method: 'envolvente' };
+      var sc = scoreResult(res);
+      if (!best || scoreBetter(sc, best.sc)) best = { seed: seed, sc: sc, res: res };
+    }
+    return best;
+  }
+
+  function pieceById(id) {
+    return state.pieces.find(function (p) { return p.id === id; });
+  }
+
+  // Aprovechamiento por ÁREA REAL de las piezas, no por su rectángulo
+  // envolvente: con el envolvente una plancha llena de piezas en L marcaba
+  // 85% cuando el material realmente usado era la mitad.
+  function sheetUtilOfRaw(sheet) {
+    var used = sheet.reduce(function (sum, pl) {
+      var piece = pieceById(pl.refPieceId);
+      return sum + ((piece && piece.area) ? piece.area : pl.w * pl.h);
+    }, 0);
+    return (used / (state.sheetW * state.sheetH)) * 100;
+  }
+  function sheetUtilization(sheet) {
+    return sheetUtilOfRaw(sheet);
+  }
+
+  function buildSheetSVG(sheet, sheetIdx) {
+    var W = state.sheetW, H = state.sheetH;
+    var fy = function (y) { return H - y; };
+    var rotateView = state.viewRotated;
+    var parts = [];
+    // Las planchas suelen ser mucho más altas que anchas (ej. 1000x3000):
+    // mostrarlas "acostadas" (rotadas 90°) aprovecha mucho mejor el ancho
+    // típico de una pantalla/monitor. El giro es solo de VISTA -- las
+    // coordenadas reales (y el DXF/PDF exportado) no cambian.
+    if (rotateView) {
+      parts.push('<svg viewBox="0 0 ' + H + ' ' + W + '" xmlns="http://www.w3.org/2000/svg" style="background:rgba(255,255,255,0.02)">');
+      parts.push('<g transform="translate(' + H + ',0) rotate(90)">');
+    } else {
+      parts.push('<svg viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg" style="background:rgba(255,255,255,0.02)">');
+    }
+    // borde plancha
+    parts.push('<rect x="0" y="0" width="' + W + '" height="' + H + '" fill="none" stroke="#9CA3AF" stroke-width="' + Math.max(W, H) * 0.0025 + '" stroke-dasharray="' + Math.max(W, H) * 0.006 + ',' + Math.max(W, H) * 0.004 + '"/>');
+
+    sheet.forEach(function (pl) {
+      var piece = pieceById(pl.refPieceId);
+      if (!piece) return;
+      var ents = transformEntitiesForPlacement(piece.entities, piece.w, piece.h, placementRot(pl), pl.x, pl.y);
+      var g = ['<g>'];
+      ents.forEach(function (e) {
+        if (e.type === 'LINE') {
+          g.push('<line x1="' + e.x1 + '" y1="' + fy(e.y1) + '" x2="' + e.x2 + '" y2="' + fy(e.y2) + '" stroke="#17738a" stroke-width="' + Math.max(W, H) * 0.0018 + '"/>');
+        } else if (e.type === 'POLYLINE') {
+          var pts = e.points.map(function (p) { return p[0] + ',' + fy(p[1]); }).join(' ');
+          if (e.closed) {
+            g.push('<polygon points="' + pts + '" fill="rgba(23,115,138,0.22)" stroke="#17738a" stroke-width="' + Math.max(W, H) * 0.0018 + '"/>');
+          } else {
+            g.push('<polyline points="' + pts + '" fill="none" stroke="#17738a" stroke-width="' + Math.max(W, H) * 0.0018 + '"/>');
+          }
+        } else if (e.type === 'CIRCLE') {
+          g.push('<circle cx="' + e.cx + '" cy="' + fy(e.cy) + '" r="' + e.r + '" fill="none" stroke="#17738a" stroke-width="' + Math.max(W, H) * 0.0018 + '"/>');
+        } else if (e.type === 'ARC') {
+          var apts = arcToPolylinePoints(e.cx, e.cy, e.r, e.a1, e.a2).map(function (p) { return p[0] + ',' + fy(p[1]); }).join(' ');
+          g.push('<polyline points="' + apts + '" fill="none" stroke="#17738a" stroke-width="' + Math.max(W, H) * 0.0018 + '"/>');
+        }
+      });
+      g.push('</g>');
+      parts.push(g.join(''));
+
+      var cx = pl.x + pl.w / 2, cyc = fy(pl.y + pl.h / 2);
+      var fontSize = state.labelSizeMm;
+      parts.push('<text x="' + cx + '" y="' + cyc + '" font-size="' + fontSize + '" fill="#F8FAFC" text-anchor="middle" dominant-baseline="middle" font-family="Montserrat, sans-serif" opacity="0.9">' + escapeHtml(piece.name) + '</text>');
+    });
+
+    // --- despunte: paño transversal + recortes rectangulares ---
+    var rm = state.markRemnant ? remnantForSheet(sheetIdx) : null;
+    if (rm) {
+      var big = Math.max(W, H);
+      var lw = big * 0.0022;
+      var dash = (big * 0.012) + ',' + (big * 0.008);
+      var labelSize = Math.max(big * 0.012, state.labelSizeMm * 1.6);
+      if (rm.cutY !== null) {
+        // línea transversal de fin de corte
+        parts.push('<line x1="0" y1="' + fy(rm.cutY) + '" x2="' + W + '" y2="' + fy(rm.cutY) +
+          '" stroke="#e8804f" stroke-width="' + (lw * 1.6) + '" stroke-dasharray="' + dash + '"/>');
+      }
+      if (rm.pano) {
+        parts.push('<rect x="' + rm.pano.x + '" y="' + fy(rm.pano.y + rm.pano.h) + '" width="' + rm.pano.w + '" height="' + rm.pano.h +
+          '" fill="rgba(232,128,79,0.09)" stroke="#e8804f" stroke-width="' + lw + '" stroke-dasharray="' + dash + '"/>');
+        parts.push('<text x="' + (rm.pano.x + rm.pano.w / 2) + '" y="' + fy(rm.pano.y + rm.pano.h / 2) +
+          '" font-size="' + labelSize + '" fill="#e8a06f" text-anchor="middle" dominant-baseline="middle" font-family="Montserrat, sans-serif">' +
+          'DESPUNTE ' + Math.round(rm.pano.w) + '×' + Math.round(rm.pano.h) + '</text>');
+      }
+      rm.offcuts.forEach(function (o) {
+        parts.push('<rect x="' + o.x + '" y="' + fy(o.y + o.h) + '" width="' + o.w + '" height="' + o.h +
+          '" fill="rgba(232,128,79,0.07)" stroke="#e8804f" stroke-width="' + lw + '" stroke-dasharray="' + dash + '"/>');
+        parts.push('<text x="' + (o.x + o.w / 2) + '" y="' + fy(o.y + o.h / 2) +
+          '" font-size="' + labelSize * 0.8 + '" fill="#e8a06f" text-anchor="middle" dominant-baseline="middle" font-family="Montserrat, sans-serif">' +
+          Math.round(o.w) + '×' + Math.round(o.h) + '</text>');
+      });
+    }
+
+    if (rotateView) parts.push('</g>');
+    parts.push('</svg>');
+    return parts.join('');
+  }
+
+  function renderResults(res) {
+    var area = $('resultsArea');
+    if (res.error) {
+      area.innerHTML = '<div class="card"><div class="status-line err">' + escapeHtml(res.error) + '</div></div>';
+      return;
+    }
+    var totalPieces = state.pieces.reduce(function (s, p) { return s + p.qty; }, 0);
+    var placedTotal = res.sheets.reduce(function (s, sh) { return s + sh.length; }, 0);
+    var avgUtil = res.sheets.length ? (res.sheets.reduce(function (s, sh) { return s + sheetUtilization(sh); }, 0) / res.sheets.length) : 0;
+
+    var html = '';
+    html += '<div class="stats-row">';
+    html += '<div class="stat-box"><div class="val">' + res.sheets.length + '</div><div class="lbl">Plancha(s) necesarias</div></div>';
+    html += '<div class="stat-box"><div class="val">' + placedTotal + ' / ' + totalPieces + '</div><div class="lbl">Piezas ubicadas</div></div>';
+    html += '<div class="stat-box"><div class="val">' + fmt(avgUtil) + '%</div><div class="lbl">Aprovechamiento promedio</div></div>';
+    html += '<div class="stat-box' + (res.unplaced.length ? ' warn' : '') + '"><div class="val">' + res.unplaced.length + '</div><div class="lbl">Piezas sin ubicar</div></div>';
+    // despunte recuperable más grande del trabajo
+    var bigRm = null;
+    if (state.markRemnant && res.remnants) {
+      res.remnants.forEach(function (rm) {
+        if (rm.pano && (!bigRm || rm.pano.w * rm.pano.h > bigRm.w * bigRm.h)) bigRm = rm.pano;
+        rm.offcuts.forEach(function (o) { if (!bigRm || o.w * o.h > bigRm.w * bigRm.h) bigRm = o; });
+      });
+    }
+    html += '<div class="stat-box"><div class="val">' + (bigRm ? (Math.round(bigRm.w) + '×' + Math.round(bigRm.h)) : '—') +
+      '</div><div class="lbl">Despunte mayor (mm)</div></div>';
+    html += '</div>';
+
+    if (res.unplaced.length) {
+      html += '<div class="card"><div class="status-line warn">Hay ' + res.unplaced.length + ' pieza(s) que no caben en la plancha configurada (revisa dimensiones, margen o pitch).</div></div>';
+    }
+
+    if (res.sheets.length) {
+      html += '<div class="card">';
+      html += '<h2>Vista previa — ' + res.sheets.length + ' plancha' + (res.sheets.length === 1 ? '' : 's') + '</h2>';
+      if (res.method) {
+        html += '<div class="sheet-meta" style="margin:-6px 0 10px;">Anidado por <b>' +
+          (res.method === 'contorno' ? 'contorno real' : 'rectángulo envolvente') + '</b>' +
+          (res.method === 'contorno' ? ' — las piezas encajan entre sí aprovechando sus huecos' : '') + '</div>';
+      }
+      html += '<div class="view-toolbar">';
+      html += '<button class="btn ghost small" id="btnRotateView" type="button">⟳ Girar vista 90°</button>';
+      html += '<div class="zoom-ctrl">';
+      html += '<button class="btn ghost small" id="btnZoomOut" type="button">－</button>';
+      html += '<span class="slider-val" id="zoomVal">100%</span>';
+      html += '<button class="btn ghost small" id="btnZoomIn" type="button">＋</button>';
+      html += '<button class="btn ghost small" id="btnZoomReset" type="button">Ajustar</button>';
+      html += '</div></div>';
+      if (res.sheets.length > 1) {
+        html += '<div class="sheet-tabs">';
+        res.sheets.forEach(function (sh, i) { html += '<a class="sheet-tab" href="#sheetCard' + i + '">Plancha ' + (i + 1) + '</a>'; });
+        html += '</div>';
+      }
+      var multi = res.sheets.length > 1;
+      html += '<div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">';
+      html += '<button class="btn ghost small" id="btnDownloadAll">⭳ ' + (multi ? 'Todas en 1 DXF' : 'Descargar DXF') + '</button>';
+      html += '<button class="btn small" id="btnPdfAll">⭳ ' + (multi ? 'Todas en 1 PDF (' + res.sheets.length + ' págs.)' : 'Descargar PDF') + '</button>';
+      if (multi) html += '<span class="sheet-meta">DXF: las ' + res.sheets.length + ' planchas en un mismo dibujo, una al lado de otra.</span>';
+      html += '</div>';
+      html += '</div>';
+
+      // Una card independiente por CADA plancha -- todas se muestran a la
+      // vez (con scroll de la página), no solo la seleccionada.
+      res.sheets.forEach(function (sh, i) {
+        var util = sheetUtilOfRaw(sh);
+        var rm = res.remnants && res.remnants[i];
+        var rmTxt = '';
+        if (state.markRemnant && rm) {
+          var bits = [];
+          if (rm.pano) bits.push('paño <b>' + Math.round(rm.pano.w) + '×' + Math.round(rm.pano.h) + '</b> (corte transversal en Y=' + Math.round(rm.cutY) + ')');
+          rm.offcuts.forEach(function (o) { bits.push('recorte <b>' + Math.round(o.w) + '×' + Math.round(o.h) + '</b>'); });
+          rmTxt = bits.length ? ' · despunte: ' + bits.join(' + ') : ' · sin despunte recuperable';
+        }
+        html += '<div class="card" id="sheetCard' + i + '">';
+        html += '<div class="sheet-card-head"><b>Plancha ' + (i + 1) + '</b> de ' + res.sheets.length + ' · ' + sh.length + ' piezas · aprovechamiento <b>' + fmt(util) + '%</b> · ' + state.sheetW + '×' + state.sheetH + ' mm' + rmTxt + '</div>';
+        html += '<div class="sheet-svg-wrap" data-idx="' + i + '"></div>';
+        html += '<div class="sheet-actions">';
+        html += '<div></div>';
+        html += '<div style="display:flex; gap:8px; flex-wrap:wrap;">';
+        html += '<button class="btn ghost small" data-role="dl-dxf" data-idx="' + i + '">⭳ DXF</button>';
+        html += '<button class="btn small" data-role="dl-pdf" data-idx="' + i + '">⭳ PDF</button>';
+        html += '</div></div></div>';
+      });
+    }
+
+    area.innerHTML = html;
+
+    if (res.sheets.length) {
+      rebuildAllSheetSVGs(res);
+
+      $('btnDownloadAll').addEventListener('click', function () { downloadAllDXF(state.result); });
+      $('btnPdfAll').addEventListener('click', function () { downloadAllPDF(state.result); });
+      $('btnRotateView').addEventListener('click', function () {
+        state.viewRotated = !state.viewRotated;
+        rebuildAllSheetSVGs(res);
+      });
+      $('btnZoomIn').addEventListener('click', function () {
+        state.zoom = Math.min(4, Math.round((state.zoom + 0.25) * 100) / 100);
+        applyZoomStyle();
+      });
+      $('btnZoomOut').addEventListener('click', function () {
+        state.zoom = Math.max(0.5, Math.round((state.zoom - 0.25) * 100) / 100);
+        applyZoomStyle();
+      });
+      $('btnZoomReset').addEventListener('click', function () {
+        state.zoom = 1;
+        applyZoomStyle();
+      });
+
+    }
+  }
+
+  // Delegación de eventos para los botones de descarga de cada plancha.
+  // OJO: se registra UNA sola vez sobre #resultsArea (que nunca se
+  // reemplaza, solo su innerHTML). Antes se registraba dentro de
+  // renderResults, así que cada recálculo apilaba un listener más: un
+  // clic terminaba disparando N descargas, varias de ellas con la
+  // geometría vieja de cálculos anteriores.
+  $('resultsArea').addEventListener('click', function (e) {
+    var t = e.target;
+    if (!t || !t.dataset || !t.dataset.role) return;
+    var res = state.result;
+    if (!res || !res.sheets) return;
+    var idx = parseInt(t.dataset.idx, 10);
+    if (isNaN(idx) || !res.sheets[idx]) return;
+    if (t.dataset.role === 'dl-dxf') downloadSheetDXF(res.sheets[idx], idx);
+    else if (t.dataset.role === 'dl-pdf') downloadSheetPDF(res.sheets[idx], idx);
+  });
+
+  function applyZoomStyle() {
+    var svgs = document.querySelectorAll('.sheet-svg-wrap svg');
+    svgs.forEach(function (svg) {
+      if (Math.abs(state.zoom - 1) < 1e-6) {
+        svg.style.width = '';
+        svg.style.maxWidth = '100%';
+      } else {
+        svg.style.maxWidth = 'none';
+        svg.style.width = (state.zoom * 100) + '%';
+      }
+    });
+    var zoomValEl = $('zoomVal');
+    if (zoomValEl) zoomValEl.textContent = Math.round(state.zoom * 100) + '%';
+  }
+
+  // Reconstruye el SVG de TODAS las planchas (usado al calcular y al
+  // cambiar la orientación de vista, ya que eso cambia el viewBox).
+  function rebuildAllSheetSVGs(res) {
+    document.querySelectorAll('.sheet-svg-wrap').forEach(function (wrap) {
+      var idx = parseInt(wrap.dataset.idx, 10);
+      wrap.innerHTML = buildSheetSVG(res.sheets[idx], idx);
+    });
+    applyZoomStyle();
+  }
+
+  // Entidades del despunte de una plancha, en la capa DESPUNTE y
+  // opcionalmente desplazadas en X (para el DXF combinado).
+  function remnantEntities(rm, dx) {
+    dx = dx || 0;
+    var ents = [];
+    if (!rm) return ents;
+    if (rm.cutY !== null) {
+      // línea transversal: fin del corte, a lo ancho completo de la plancha
+      ents.push({ type: 'LINE', layer: LAYER_DESPUNTE, x1: dx, y1: rm.cutY, x2: dx + state.sheetW, y2: rm.cutY });
+    }
+    rm.offcuts.forEach(function (o) {
+      ents.push({
+        type: 'POLYLINE', layer: LAYER_DESPUNTE, closed: true,
+        points: [[dx + o.x, o.y], [dx + o.x + o.w, o.y], [dx + o.x + o.w, o.y + o.h], [dx + o.x, o.y + o.h]]
+      });
+    });
+    return ents;
+  }
+
+  function remnantForSheet(idx) {
+    var res = state.result;
+    if (!res || !res.remnants) return null;
+    return res.remnants[idx] || null;
+  }
+
+  function sheetDXFText(sheet, idx) {
+    var allEntities = [];
+    sheet.forEach(function (pl) {
+      var piece = pieceById(pl.refPieceId);
+      if (!piece) return;
+      var ents = transformEntitiesForPlacement(piece.entities, piece.w, piece.h, placementRot(pl), pl.x, pl.y);
+      allEntities = allEntities.concat(ents);
+    });
+    if (state.markRemnant && state.remnantInDxf) {
+      allEntities = allEntities.concat(remnantEntities(remnantForSheet(idx), 0));
+    }
+    return buildDXF(allEntities, state.sheetW, state.sheetH, { drawSheetBorder: true });
+  }
+
+  function sheetFileName(idx, ext) {
+    return 'plancha_' + (idx + 1) + '_' + state.sheetW + 'x' + state.sheetH + '.' + ext;
+  }
+
+  function downloadSheetDXF(sheet, idx) {
+    downloadText(sheetFileName(idx, 'dxf'), sheetDXFText(sheet, idx));
+  }
+
+  // Separación entre planchas dentro del DXF combinado (espacio en blanco
+  // del dibujo, no material): suficiente para distinguirlas de un vistazo
+  // al abrir el archivo.
+  function sheetsGap() { return Math.max(100, Math.round(state.sheetW * 0.1)); }
+
+  // TODAS las planchas en UN SOLO archivo .dxf: cada plancha queda dibujada
+  // una al lado de la otra (desplazadas en X), cada una con su contorno,
+  // en el mismo dibujo. Así se abre un único archivo en AutoCAD / la
+  // máquina y se ven todas las planchas del trabajo.
+  function allSheetsDXFText(res) {
+    var W = state.sheetW, H = state.sheetH;
+    var gap = sheetsGap();
+    var allEntities = [];
+    res.sheets.forEach(function (sheet, i) {
+      var dx = i * (W + gap);
+      // contorno de esta plancha, desplazado
+      allEntities.push({ type: 'POLYLINE', closed: true, points: [[dx, 0], [dx + W, 0], [dx + W, H], [dx, H]] });
+      sheet.forEach(function (pl) {
+        var piece = pieceById(pl.refPieceId);
+        if (!piece) return;
+        allEntities = allEntities.concat(
+          transformEntitiesForPlacement(piece.entities, piece.w, piece.h, placementRot(pl), pl.x + dx, pl.y)
+        );
+      });
+      if (state.markRemnant && state.remnantInDxf && res.remnants) {
+        allEntities = allEntities.concat(remnantEntities(res.remnants[i], dx));
+      }
+    });
+    var totalW = res.sheets.length * W + (res.sheets.length - 1) * gap;
+    return buildDXF(allEntities, totalW, H, { drawSheetBorder: false });
+  }
+
+  function downloadAllDXF(res) {
+    if (!res || !res.sheets.length) return;
+    if (res.sheets.length === 1) { downloadSheetDXF(res.sheets[0], 0); return; }
+    downloadText('planchas_' + res.sheets.length + 'x_' + state.sheetW + 'x' + state.sheetH + '.dxf', allSheetsDXFText(res));
+    setStatus(res.sheets.length + ' planchas en un solo archivo DXF (una al lado de la otra).', 'ok');
+  }
+
+  // ---------------------------------------------------------------
+  // EXPORTAR PDF (vista de plancha con etiquetas, tamaño de texto editable)
+  // ---------------------------------------------------------------
+  function pdfAvailable() {
+    if (typeof window.jspdf === 'undefined' || !window.jspdf.jsPDF) {
+      setStatus('No se pudo cargar la librería de PDF (se necesita conexión a internet la primera vez que se usa esta función).', 'err');
+      return false;
+    }
+    return true;
+  }
+
+  // Dibuja UNA plancha en la página actual del documento PDF
+  // ---------------------------------------------------------------
+  // PDF — documento de presentación (viñeta C.I.D., dibujo a escala,
+  // lista de corte y datos del trabajo). El formato "Escala real (1:1)"
+  // mantiene la salida antigua: la plancha a tamaño natural, para
+  // plotear o medir directo sobre el papel.
+  // ---------------------------------------------------------------
+  var PDF_FORMATS = {
+    a4: { w: 297, h: 210, label: 'A4 apaisado' },
+    a3: { w: 420, h: 297, label: 'A3 apaisado' },
+    carta: { w: 279.4, h: 215.9, label: 'Carta apaisado' },
+    real: null
+  };
+
+  // paleta C.I.D. llevada a papel
+  var PDF_PETROLEO = [15, 76, 92];
+  var PDF_PETRO_BR = [23, 115, 138];
+  var PDF_PLATA = [156, 163, 175];
+  var PDF_TINTA = [17, 24, 39];
+  var PDF_NARANJO = [206, 106, 54];
+  var PDF_PAPEL_SUAVE = [244, 247, 248];
+
+  function pdfSpec() { return PDF_FORMATS[state.pdfFormat] || null; }
+
+  // jsPDF fuerza la hoja a vertical salvo que se le indique la orientación,
+  // así que hay que pasarla explícitamente o el A4 apaisado sale en vertical.
+  function pdfOrientationOf(w, h) { return w > h ? 'landscape' : 'portrait'; }
+
+  function createPDFDoc() {
+    var JsPdfCtor = window.jspdf.jsPDF;
+    var spec = pdfSpec();
+    var w = spec ? spec.w : state.sheetW, h = spec ? spec.h : state.sheetH;
+    return {
+      doc: new JsPdfCtor({ unit: 'mm', format: [w, h], orientation: pdfOrientationOf(w, h) }),
+      spec: spec
+    };
+  }
+
+  function addPDFPage(doc, spec) {
+    var w = spec ? spec.w : state.sheetW, h = spec ? spec.h : state.sheetH;
+    doc.addPage([w, h], pdfOrientationOf(w, h));
+  }
+
+  function setDash(doc, on, dash, gap) {
+    if (typeof doc.setLineDashPattern !== 'function') return;
+    doc.setLineDashPattern(on ? [dash, gap] : [], 0);
+  }
+
+  // Tamaño de fuente (pt) más grande con el que `txt` cabe dentro de un
+  // recuadro de maxW x maxH mm. Se mide el ancho real con jsPDF en vez de
+  // estimarlo: estimando, las etiquetas largas se salían de su recuadro.
+  function fitFontSize(doc, txt, maxW, maxH, cap) {
+    if (!txt) return 0;
+    var probe = 10;
+    doc.setFontSize(probe);
+    var wAtProbe = (typeof doc.getTextWidth === 'function') ? doc.getTextWidth(txt) : 0;
+    var byWidth = wAtProbe > 0 ? (probe * (maxW * 0.9) / wAtProbe) : cap;
+    var byHeight = maxH * 2.83465 * 0.55;   // deja aire arriba y abajo
+    return Math.min(byWidth, byHeight, cap);
+  }
+
+  // Número de referencia de cada tipo de pieza, estable en todo el trabajo:
+  // en una lámina a escala el nombre completo no cabe y las etiquetas se
+  // pisan unas con otras, así que sobre el dibujo va el número y el nombre
+  // queda en la lista de corte.
+  function pieceIndexOf(refPieceId) {
+    for (var i = 0; i < state.pieces.length; i++) {
+      if (state.pieces[i].id === refPieceId) return i + 1;
+    }
+    return 0;
+  }
+
+  // Lista de corte de una plancha, agrupada por tipo de pieza
+  function cutListFor(sheet) {
+    var map = {};
+    sheet.forEach(function (pl) {
+      var piece = pieceById(pl.refPieceId);
+      if (!piece) return;
+      if (!map[pl.refPieceId]) {
+        map[pl.refPieceId] = { idx: pieceIndexOf(pl.refPieceId), name: piece.name, w: piece.w, h: piece.h, qty: 0, rot: 0 };
+      }
+      map[pl.refPieceId].qty++;
+      if (placementRot(pl) !== 0) map[pl.refPieceId].rot++;   // cualquiera de los 4 giros
+    });
+    return Object.keys(map).map(function (k) { return map[k]; })
+      .sort(function (a, b) { return b.qty - a.qty || a.name.localeCompare(b.name); });
+  }
+
+  // Dibuja la geometría de una plancha aplicando una transformación
+  // arbitraria (escala + rotación de vista), y opcionalmente el despunte.
+  function drawSheetGeometry(doc, sheet, tx, s, rotated, opts) {
+    opts = opts || {};
+    var W = state.sheetW, H = state.sheetH;
+
+    // fondo y borde de la plancha
+    if (opts.paper) {
+      var c0 = tx(0, 0), c1 = tx(W, H);
+      doc.setFillColor(PDF_PAPEL_SUAVE[0], PDF_PAPEL_SUAVE[1], PDF_PAPEL_SUAVE[2]);
+      doc.rect(Math.min(c0[0], c1[0]), Math.min(c0[1], c1[1]), Math.abs(c1[0] - c0[0]), Math.abs(c1[1] - c0[1]), 'F');
+    }
+    doc.setDrawColor(PDF_PLATA[0], PDF_PLATA[1], PDF_PLATA[2]);
+    doc.setLineWidth(opts.borderLw || 0.5);
+    var b0 = tx(0, 0), b1 = tx(W, H);
+    doc.rect(Math.min(b0[0], b1[0]), Math.min(b0[1], b1[1]), Math.abs(b1[0] - b0[0]), Math.abs(b1[1] - b0[1]));
+
+    // piezas
+    doc.setDrawColor(PDF_PETRO_BR[0], PDF_PETRO_BR[1], PDF_PETRO_BR[2]);
+    doc.setLineWidth(opts.pieceLw || 0.3);
+    sheet.forEach(function (pl) {
+      var piece = pieceById(pl.refPieceId);
+      if (!piece) return;
+      var ents = transformEntitiesForPlacement(piece.entities, piece.w, piece.h, placementRot(pl), pl.x, pl.y);
+      ents.forEach(function (e) {
+        if (e.type === 'LINE') {
+          var a = tx(e.x1, e.y1), b = tx(e.x2, e.y2);
+          doc.line(a[0], a[1], b[0], b[1]);
+        } else if (e.type === 'POLYLINE') {
+          for (var i = 0; i < e.points.length - 1; i++) {
+            var p1 = tx(e.points[i][0], e.points[i][1]), p2 = tx(e.points[i + 1][0], e.points[i + 1][1]);
+            doc.line(p1[0], p1[1], p2[0], p2[1]);
+          }
+          if (e.closed && e.points.length > 1) {
+            var last = tx(e.points[e.points.length - 1][0], e.points[e.points.length - 1][1]);
+            var first = tx(e.points[0][0], e.points[0][1]);
+            doc.line(last[0], last[1], first[0], first[1]);
+          }
+        } else if (e.type === 'CIRCLE') {
+          var c = tx(e.cx, e.cy);
+          doc.circle(c[0], c[1], e.r * s);
+        } else if (e.type === 'ARC') {
+          var apts = arcToPolylinePoints(e.cx, e.cy, e.r, e.a1, e.a2);
+          for (var j = 0; j < apts.length - 1; j++) {
+            var q1 = tx(apts[j][0], apts[j][1]), q2 = tx(apts[j + 1][0], apts[j + 1][1]);
+            doc.line(q1[0], q1[1], q2[0], q2[1]);
+          }
+        }
+      });
+    });
+
+    // etiquetas de pieza: tamaño en puntos, ajustado a que quepa dentro
+    // de la pieza (en un documento a escala no sirve medirlas en mm)
+    doc.setTextColor(PDF_TINTA[0], PDF_TINTA[1], PDF_TINTA[2]);
+    doc.setFont('helvetica', 'normal');
+    sheet.forEach(function (pl) {
+      var piece = pieceById(pl.refPieceId);
+      if (!piece) return;
+      var c = tx(pl.x + pl.w / 2, pl.y + pl.h / 2);
+      var boxW = (rotated ? pl.h : pl.w) * s;   // espacio disponible en la página
+      var boxH = (rotated ? pl.w : pl.h) * s;
+      var txt = opts.labelMode === 'index' ? String(pieceIndexOf(pl.refPieceId)) : piece.name;
+      var fit = opts.labelPt !== undefined ? opts.labelPt : fitFontSize(doc, txt, boxW, boxH, 11);
+      if (fit < 4.2) return; // no cabe legible: queda listada en la tabla de corte
+      doc.setFontSize(fit);
+      doc.text(txt, c[0], c[1], { align: 'center', baseline: 'middle' });
+    });
+
+    // despunte
+    var rm = (state.markRemnant && opts.sheetIdx !== undefined) ? remnantForSheet(opts.sheetIdx) : null;
+    if (opts.remnant && rm) {
+      doc.setDrawColor(PDF_NARANJO[0], PDF_NARANJO[1], PDF_NARANJO[2]);
+      doc.setTextColor(PDF_NARANJO[0], PDF_NARANJO[1], PDF_NARANJO[2]);
+      setDash(doc, true, 2.2, 1.6);
+      doc.setLineWidth((opts.pieceLw || 0.3) * 1.9);
+      if (rm.cutY !== null) {
+        var l1 = tx(0, rm.cutY), l2 = tx(W, rm.cutY);
+        doc.line(l1[0], l1[1], l2[0], l2[1]);
+      }
+      doc.setLineWidth((opts.pieceLw || 0.3) * 1.2);
+      var regions = [];
+      if (rm.pano) regions.push({ r: rm.pano, main: true });
+      rm.offcuts.forEach(function (o) { regions.push({ r: o, main: false }); });
+      regions.forEach(function (reg) {
+        var r = reg.r;
+        var p0 = tx(r.x, r.y), p1 = tx(r.x + r.w, r.y + r.h);
+        doc.rect(Math.min(p0[0], p1[0]), Math.min(p0[1], p1[1]), Math.abs(p1[0] - p0[0]), Math.abs(p1[1] - p0[1]));
+        var cc = tx(r.x + r.w / 2, r.y + r.h / 2);
+        var availW = (rotated ? r.h : r.w) * s, availH = (rotated ? r.w : r.h) * s;
+        var txt = (reg.main ? 'DESPUNTE ' : '') + Math.round(r.w) + ' x ' + Math.round(r.h);
+        // en una franja angosta y alta la etiqueta se lee mucho mejor girada
+        var vertical = availH > availW * 1.6;
+        var fitW = vertical ? availH : availW, fitH = vertical ? availW : availH;
+        var pt = fitFontSize(doc, txt, fitW, fitH, 10);
+        if (pt < 4.2 && reg.main) { // no cabe el rótulo completo: al menos la medida
+          txt = Math.round(r.w) + ' x ' + Math.round(r.h);
+          pt = fitFontSize(doc, txt, fitW, fitH, 10);
+        }
+        if (pt >= 4.2) {
+          doc.setFontSize(pt);
+          var o = { align: 'center', baseline: 'middle' };
+          if (vertical) o.angle = 90;
+          doc.text(txt, cc[0], cc[1], o);
+        }
+      });
+      setDash(doc, false);
+    }
+    doc.setTextColor(PDF_TINTA[0], PDF_TINTA[1], PDF_TINTA[2]);
+  }
+
+
+  // --- salida 1:1, la plancha a tamaño natural ---
+  function drawSheetRealScale(doc, sheet, sheetIdx) {
+    var H = state.sheetH;
+    var tx = function (x, y) { return [x, H - y]; };
+    drawSheetGeometry(doc, sheet, tx, 1, false, {
+      borderLw: Math.max(state.sheetW, H) * 0.0012,
+      pieceLw: Math.max(state.sheetW, H) * 0.0012,
+      labelPt: state.labelSizeMm * 2.83465,
+      remnant: true,
+      sheetIdx: sheetIdx
+    });
+  }
+
+  // --- salida de presentación ---
+  // El panel de datos se ubica al costado o abajo, según cuál de las dos
+  // disposiciones permita dibujar la plancha más grande (una plancha muy
+  // alargada aprovecha mejor el ancho completo de la hoja).
+  function drawSheetPresentation(doc, sheet, sheetIdx, spec) {
+    var PW = spec.w, PH = spec.h;
+    var W = state.sheetW, H = state.sheetH;
+    var total = (state.result && state.result.sheets.length) || 1;
+    var M = 10, headerH = 15, footerH = 9, gap = 6, dimPad = 10;
+
+    // ---------- encabezado ----------
+    doc.setFillColor(PDF_PETROLEO[0], PDF_PETROLEO[1], PDF_PETROLEO[2]);
+    doc.rect(0, 0, PW, headerH, 'F');
+    doc.setTextColor(248, 250, 252);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.text('CUBICACIÓN DE CORTE LÁSER', M, 9.4);
+    var job = (state.jobName || '').trim();
+    if (job) {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.text(job, M + 80, 9.4);
+    }
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.text('BASTIAN.XYZ', PW - M, 7.4, { align: 'right' });
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(6.6);
+    doc.setTextColor(PDF_PLATA[0], PDF_PLATA[1], PDF_PLATA[2]);
+    doc.text('C.I.D.', PW - M, 11.6, { align: 'right' });
+
+    // ---------- elegir disposición ----------
+    var contentTop = headerH + 6, contentBottom = PH - footerH - 5;
+    var contentW = PW - 2 * M, contentH = contentBottom - contentTop;
+
+    function bestScale(bw, bh) {
+      return Math.max(Math.min(bw / W, bh / H), Math.min(bw / H, bh / W));
+    }
+    var panelWSide = Math.max(72, PW * 0.25);
+    var sSide = bestScale(contentW - panelWSide - gap - dimPad, contentH - dimPad);
+    var panelHBottom = 54;
+    var sBottom = bestScale(contentW - dimPad, contentH - panelHBottom - gap - dimPad);
+    var sidePanel = sSide >= sBottom;
+    var s0 = sidePanel ? sSide : sBottom;
+
+    var boxX, boxY, boxW, boxH, panel;
+    if (sidePanel) {
+      boxX = M + dimPad; boxY = contentTop;
+      boxW = contentW - panelWSide - gap - dimPad; boxH = contentH - dimPad;
+      panel = { x: PW - M - panelWSide, y: contentTop, w: panelWSide, h: contentH, horizontal: false };
+    } else {
+      boxX = M + dimPad; boxY = contentTop;
+      boxW = contentW - dimPad; boxH = contentH - panelHBottom - gap - dimPad;
+      panel = { x: M, y: contentTop + boxH + dimPad + gap - 4, w: contentW, h: panelHBottom, horizontal: true };
+    }
+
+    // ---------- dibujo ----------
+    var sFlat = Math.min(boxW / W, boxH / H), sRot = Math.min(boxW / H, boxH / W);
+    var rotated = sRot > sFlat;
+    var s = rotated ? sRot : sFlat;
+    var drawW = (rotated ? H : W) * s, drawH = (rotated ? W : H) * s;
+    var offX = boxX + (boxW - drawW) / 2, offY = boxY + (boxH - drawH) / 2;
+    var tx = rotated
+      ? function (x, y) { return [offX + y * s, offY + (W - x) * s]; }
+      : function (x, y) { return [offX + x * s, offY + (H - y) * s]; };
+
+    drawSheetGeometry(doc, sheet, tx, s, rotated, { paper: true, borderLw: 0.5, pieceLw: 0.32, remnant: true, sheetIdx: sheetIdx, labelMode: 'index' });
+
+    // ---------- acotado ----------
+    doc.setDrawColor(PDF_PLATA[0], PDF_PLATA[1], PDF_PLATA[2]);
+    doc.setTextColor(PDF_PLATA[0], PDF_PLATA[1], PDF_PLATA[2]);
+    doc.setLineWidth(0.15);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7);
+    var hMm = rotated ? H : W, vMm = rotated ? W : H;
+    var dimY = offY + drawH + 3.5;
+    doc.line(offX, dimY, offX + drawW, dimY);
+    doc.line(offX, dimY - 1.4, offX, dimY + 1.4);
+    doc.line(offX + drawW, dimY - 1.4, offX + drawW, dimY + 1.4);
+    doc.text(fmt(hMm) + ' mm', offX + drawW / 2, dimY + 5, { align: 'center' });
+    var dimX = offX - 3.5;
+    doc.line(dimX, offY, dimX, offY + drawH);
+    doc.line(dimX - 1.4, offY, dimX + 1.4, offY);
+    doc.line(dimX - 1.4, offY + drawH, dimX + 1.4, offY + drawH);
+    doc.text(fmt(vMm) + ' mm', dimX - 1.8, offY + drawH / 2, { align: 'center', angle: 90 });
+    doc.setFontSize(6.6);
+    doc.text('escala aprox. 1:' + Math.round(1 / s) + (rotated ? '  ·  vista girada 90°' : ''),
+      offX + drawW, offY - 2.6, { align: 'right' });
+
+    // ---------- panel de datos ----------
+    drawInfoPanel(doc, panel, sheet, sheetIdx, total);
+
+    // ---------- pie ----------
+    doc.setDrawColor(PDF_PLATA[0], PDF_PLATA[1], PDF_PLATA[2]);
+    doc.setLineWidth(0.2);
+    doc.line(M, PH - footerH, PW - M, PH - footerH);
+    doc.setFontSize(6.6);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(PDF_PLATA[0], PDF_PLATA[1], PDF_PLATA[2]);
+    var metodo = (state.result && state.result.method === 'contorno') ? 'contorno real' : 'rectángulo envolvente';
+    doc.text('Pitch ' + fmt(state.pitch) + ' mm  ·  Margen ' + fmt(state.margin) + ' mm  ·  Semilla ' + state.seed +
+      '  ·  Despunte mínimo ' + fmt(state.minRemnant) + ' mm  ·  Anidado por ' + metodo, M, PH - footerH + 4.2);
+    doc.text(pdfDateStamp() + '  ·  Plancha ' + (sheetIdx + 1) + '/' + total, PW - M, PH - footerH + 4.2, { align: 'right' });
+  }
+
+  // Bloques de datos: apilados si el panel va al costado, en columnas si va
+  // abajo. Devuelve la altura usada.
+  function drawInfoPanel(doc, panel, sheet, sheetIdx, total) {
+    var rm = state.markRemnant ? remnantForSheet(sheetIdx) : null;
+    var util = sheetUtilOfRaw(sheet);
+    var W = state.sheetW, H = state.sheetH;
+
+    var rows = [['Medida de plancha', fmt(W) + ' × ' + fmt(H) + ' mm', false],
+                ['Piezas en esta plancha', String(sheet.length), true],
+                ['Aprovechamiento', fmt(util) + ' %', true]];
+    if (rm) {
+      if (rm.pano) rows.push(['Despunte (paño)', Math.round(rm.pano.w) + ' × ' + Math.round(rm.pano.h) + ' mm', true]);
+      if (rm.cutY !== null) rows.push(['Fin de corte', 'Y = ' + Math.round(rm.cutY) + ' mm', false]);
+      rm.offcuts.forEach(function (o, i) {
+        rows.push(['Recorte útil ' + (i + 1), Math.round(o.w) + ' × ' + Math.round(o.h) + ' mm', false]);
+      });
+    }
+    var list = cutListFor(sheet);
+
+    function bar(x, y, w, title, right, dark) {
+      var c = dark ? PDF_PETROLEO : PDF_PETRO_BR;
+      doc.setFillColor(c[0], c[1], c[2]);
+      doc.rect(x, y, w, 6.6, 'F');
+      doc.setTextColor(248, 250, 252);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7.4);
+      doc.text(title === 'LISTA DE CORTE' ? 'N°  LISTA DE CORTE' : title, x + 3, y + 4.5);
+      if (right) doc.text(right, x + w - 3, y + 4.5, { align: 'right' });
+      return y + 6.6;
+    }
+
+    function drawRows(x, y, w, maxY) {
+      doc.setFontSize(7);
+      for (var i = 0; i < rows.length; i++) {
+        if (y + 6.2 > maxY) break;
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(6.8);
+        doc.setTextColor(PDF_PLATA[0], PDF_PLATA[1], PDF_PLATA[2]);
+        doc.text(rows[i][0], x + 3, y + 4.4);
+        doc.setFont('helvetica', rows[i][2] ? 'bold' : 'normal');
+        doc.setFontSize(rows[i][2] ? 8 : 7.2);
+        doc.setTextColor(PDF_TINTA[0], PDF_TINTA[1], PDF_TINTA[2]);
+        doc.text(rows[i][1], x + w - 3, y + 4.4, { align: 'right' });
+        y += 6.2;
+        doc.setDrawColor(228, 232, 235);
+        doc.setLineWidth(0.12);
+        doc.line(x + 2, y, x + w - 2, y);
+      }
+      return y;
+    }
+
+    function drawList(x, y, w, maxY) {
+      var rowH = 5.2, shown = 0;
+      for (var i = 0; i < list.length; i++) {
+        if (y + rowH > maxY) {
+          doc.setTextColor(PDF_PLATA[0], PDF_PLATA[1], PDF_PLATA[2]);
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(6.4);
+          doc.text('+ ' + (list.length - shown) + ' tipo(s) más', x + 3, y + 3.6);
+          break;
+        }
+        var it = list[i];
+        if (i % 2 === 1) { doc.setFillColor(245, 247, 249); doc.rect(x, y, w, rowH, 'F'); }
+        doc.setTextColor(PDF_TINTA[0], PDF_TINTA[1], PDF_TINTA[2]);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7);
+        doc.setFont('helvetica', 'bold');
+        doc.text(String(it.idx), x + 3, y + 3.6);
+        doc.setFont('helvetica', 'normal');
+        var nm = it.name.length > 13 ? it.name.slice(0, 12) + '…' : it.name;
+        doc.text(nm, x + 8, y + 3.6);
+        doc.setTextColor(PDF_PLATA[0], PDF_PLATA[1], PDF_PLATA[2]);
+        doc.setFontSize(6.4);
+        doc.text(fmt(it.w) + '×' + fmt(it.h) + (it.rot ? '  gira ' + it.rot : ''), x + w * 0.52, y + 3.6);
+        doc.setTextColor(PDF_TINTA[0], PDF_TINTA[1], PDF_TINTA[2]);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7.4);
+        doc.text(String(it.qty), x + w - 3, y + 3.6, { align: 'right' });
+        y += rowH; shown++;
+      }
+      doc.setDrawColor(PDF_PLATA[0], PDF_PLATA[1], PDF_PLATA[2]);
+      doc.setLineWidth(0.15);
+      doc.line(x, y, x + w, y);
+      return y;
+    }
+
+    function drawLegend(x, y, w) {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(6.3);
+      doc.setDrawColor(PDF_PETRO_BR[0], PDF_PETRO_BR[1], PDF_PETRO_BR[2]);
+      doc.setLineWidth(0.45);
+      doc.line(x + 1, y, x + 6, y);
+      doc.setTextColor(PDF_PLATA[0], PDF_PLATA[1], PDF_PLATA[2]);
+      doc.text('corte de pieza', x + 7.5, y + 1);
+      if (state.markRemnant) {
+        doc.setDrawColor(PDF_NARANJO[0], PDF_NARANJO[1], PDF_NARANJO[2]);
+        setDash(doc, true, 1.2, 0.9);
+        doc.line(x + 1, y + 4.2, x + 6, y + 4.2);
+        setDash(doc, false);
+        doc.text('despunte / fin de corte', x + 7.5, y + 5.2);
+      }
+    }
+
+    if (!panel.horizontal) {
+      var y = bar(panel.x, panel.y, panel.w, 'PLANCHA ' + (sheetIdx + 1) + ' DE ' + total, '', true);
+      y = drawRows(panel.x, y + 1.5, panel.w, panel.y + panel.h * 0.62);
+      y = bar(panel.x, y + 4, panel.w, 'LISTA DE CORTE', 'CANT.', false);
+      y = drawList(panel.x, y, panel.w, panel.y + panel.h - 12);
+      drawLegend(panel.x, y + 5, panel.w);
+    } else {
+      var colGap = 6;
+      var cw = (panel.w - 2 * colGap) / 3;
+      var x1 = panel.x, x2 = panel.x + cw + colGap, x3 = panel.x + 2 * (cw + colGap);
+      var maxY = panel.y + panel.h;
+      var ya = bar(x1, panel.y, cw, 'PLANCHA ' + (sheetIdx + 1) + ' DE ' + total, '', true);
+      drawRows(x1, ya + 1.5, cw, maxY);
+      var yb = bar(x2, panel.y, cw, 'LISTA DE CORTE', 'CANT.', false);
+      drawList(x2, yb, cw, maxY);
+      var yc = bar(x3, panel.y, cw, 'REFERENCIA', '', false);
+      yc = drawRows2(doc, x3, yc + 1.5, cw, maxY, rm);
+      drawLegend(x3, yc + 3.5, cw);
+    }
+  }
+
+  // Columna de referencia del panel horizontal: resumen del despunte
+  function drawRows2(doc, x, y, w, maxY, rm) {
+    var items = [];
+    if (rm && rm.pano) items.push(['Paño de despunte', Math.round(rm.pano.w) + ' × ' + Math.round(rm.pano.h) + ' mm']);
+    if (rm && rm.cutY !== null) items.push(['Fin de corte', 'Y = ' + Math.round(rm.cutY) + ' mm']);
+    if (rm) rm.offcuts.forEach(function (o, i) { items.push(['Recorte ' + (i + 1), Math.round(o.w) + ' × ' + Math.round(o.h) + ' mm']); });
+    if (!items.length) items.push(['Despunte', state.markRemnant ? 'sin sobrante útil' : 'no marcado']);
+    items.forEach(function (it) {
+      if (y + 6.2 > maxY) return;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(6.8);
+      doc.setTextColor(PDF_PLATA[0], PDF_PLATA[1], PDF_PLATA[2]);
+      doc.text(it[0], x + 3, y + 4.4);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7.2);
+      doc.setTextColor(PDF_TINTA[0], PDF_TINTA[1], PDF_TINTA[2]);
+      doc.text(it[1], x + w - 3, y + 4.4, { align: 'right' });
+      y += 6.2;
+      doc.setDrawColor(228, 232, 235);
+      doc.setLineWidth(0.12);
+      doc.line(x + 2, y, x + w - 2, y);
+    });
+    return y;
+  }
+
+  function pdfDateStamp() {
+    var d = new Date();
+    function p(n) { return (n < 10 ? '0' : '') + n; }
+    return p(d.getDate()) + '-' + p(d.getMonth() + 1) + '-' + d.getFullYear();
+  }
+
+  function drawSheetOnPDF(doc, sheet, sheetIdx, spec) {
+    if (spec) drawSheetPresentation(doc, sheet, sheetIdx, spec);
+    else drawSheetRealScale(doc, sheet, sheetIdx);
+  }
+
+  function downloadSheetPDF(sheet, idx) {
+    if (!pdfAvailable()) return;
+    try {
+      var made = createPDFDoc();
+      drawSheetOnPDF(made.doc, sheet, idx, made.spec);
+      made.doc.save(sheetFileName(idx, 'pdf'));
+    } catch (err) {
+      setStatus('No se pudo generar el PDF: ' + (err && err.message ? err.message : err), 'err');
+    }
+  }
+
+  // Todas las planchas en UN solo PDF, una página por plancha
+  function downloadAllPDF(res) {
+    if (!res || !res.sheets.length) return;
+    if (!pdfAvailable()) return;
+    try {
+      var made = createPDFDoc();
+      res.sheets.forEach(function (sh, i) {
+        if (i > 0) addPDFPage(made.doc, made.spec);
+        drawSheetOnPDF(made.doc, sh, i, made.spec);
+      });
+      made.doc.save('planchas_' + res.sheets.length + 'x_' + state.sheetW + 'x' + state.sheetH + '.pdf');
+      if (res.sheets.length > 1) setStatus(res.sheets.length + ' planchas en un PDF de ' + res.sheets.length + ' páginas.', 'ok');
+    } catch (err) {
+      setStatus('No se pudo generar el PDF: ' + (err && err.message ? err.message : err), 'err');
+    }
+  }
+
+  $('btnCalc').addEventListener('click', function () {
+    state.activeSheet = 0;
+    var res = computeResult();
+    state.result = res;
+    renderResults(res);
+  });
+
+})();
+</script>
+</body>
+</html>
